@@ -221,7 +221,7 @@ If PIM causes access issues:
 
 ## Terraform Limitation Note
 
-As of 2024, Terraform has limited support for PIM. The following must be done manually:
+Terraform has limited support for PIM. The following must be done manually:
 
 - ✅ Create Entra ID groups (done via Terraform in rbac module)
 - ✅ Create role assignments (done via Terraform, converted to eligible in Portal)

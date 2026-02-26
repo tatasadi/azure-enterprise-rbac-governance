@@ -68,20 +68,54 @@ resource "azurerm_role_assignment" "app_team_reader_nonprod" {
 # Security & Audit Team Role Assignments
 # =============================================================================
 
-# Security Reader - Tenant Root level (read all security settings)
-resource "azurerm_role_assignment" "security_reader" {
-  scope                = data.azurerm_management_group.tenant_root.id
+# Security Reader - Platform Management Group (read all security settings for Platform resources)
+resource "azurerm_role_assignment" "security_reader_platform" {
+  scope                = data.azurerm_management_group.platform.id
   role_definition_name = "Security Reader"
   principal_id         = azuread_group.security_reader.object_id
-  description          = "Security team - Security Reader across entire tenant"
+  description          = "Security team - Security Reader for Platform management group"
 }
 
-# Audit Reader - Tenant Root level (read-only for compliance)
-resource "azurerm_role_assignment" "audit_reader" {
-  scope                = data.azurerm_management_group.tenant_root.id
+# Security Reader - Landing Zones Management Group (read all security settings for workloads)
+resource "azurerm_role_assignment" "security_reader_landing_zones" {
+  scope                = data.azurerm_management_group.landing_zones.id
+  role_definition_name = "Security Reader"
+  principal_id         = azuread_group.security_reader.object_id
+  description          = "Security team - Security Reader for Landing Zones management group"
+}
+
+# Enhanced Security Reader for workloads (with Key Vault and policy access)
+# NOTE: Custom roles with DataActions cannot be assigned at Management Group level
+# Assigning at subscription level instead
+
+resource "azurerm_role_assignment" "security_reader_workloads_prod" {
+  scope                = "/subscriptions/${var.subscription_workload_prod}"
+  role_definition_name = "CR-SecurityReader-Enterprise"  # Custom role with DataActions
+  principal_id         = azuread_group.security_reader.object_id
+  description          = "Security team - Enhanced reader for Prod workload compliance and Key Vault audits"
+}
+
+resource "azurerm_role_assignment" "security_reader_workloads_nonprod" {
+  scope                = "/subscriptions/${var.subscription_workload_nonprod}"
+  role_definition_name = "CR-SecurityReader-Enterprise"  # Custom role with DataActions
+  principal_id         = azuread_group.security_reader.object_id
+  description          = "Security team - Enhanced reader for NonProd workload compliance and Key Vault audits"
+}
+
+# Audit Reader - Platform Management Group (read-only for compliance)
+resource "azurerm_role_assignment" "audit_reader_platform" {
+  scope                = data.azurerm_management_group.platform.id
   role_definition_name = "Reader"
   principal_id         = azuread_group.audit_reader.object_id
-  description          = "Audit team - Reader access across entire tenant for compliance"
+  description          = "Audit team - Reader access for Platform management group for compliance"
+}
+
+# Audit Reader - Landing Zones Management Group (read-only for compliance)
+resource "azurerm_role_assignment" "audit_reader_landing_zones" {
+  scope                = data.azurerm_management_group.landing_zones.id
+  role_definition_name = "Reader"
+  principal_id         = azuread_group.audit_reader.object_id
+  description          = "Audit team - Reader access for Landing Zones management group for compliance"
 }
 
 # =============================================================================
@@ -104,14 +138,14 @@ resource "azurerm_role_assignment" "consultant_contributor" {
 
 resource "azurerm_role_assignment" "devops_prod" {
   scope                = data.azurerm_management_group.prod.id
-  role_definition_name = "Contributor"  # TODO: Replace with custom role
+  role_definition_name = "CR-AppDeployer-ResourceGroup-Prod"  # Custom role
   principal_id         = azuread_group.devops_deployer_prod.object_id
   description          = "DevOps pipelines - Deployer role for Prod (service principals only)"
 }
 
 resource "azurerm_role_assignment" "devops_nonprod" {
   scope                = data.azurerm_management_group.nonprod.id
-  role_definition_name = "Contributor"  # TODO: Replace with custom role
+  role_definition_name = "CR-AppDeployer-ResourceGroup-NonProd"  # Custom role
   principal_id         = azuread_group.devops_deployer_nonprod.object_id
   description          = "DevOps pipelines - Deployer role for NonProd (service principals only)"
 }

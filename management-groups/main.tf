@@ -1,14 +1,10 @@
 # Get the Tenant Root Management Group
 data "azurerm_client_config" "current" {}
 
-data "azurerm_management_group" "tenant_root" {
-  name = data.azurerm_client_config.current.tenant_id
-}
-
-# Platform Management Group
+# Import existing Platform Management Group
 resource "azurerm_management_group" "platform" {
-  display_name               = "Platform"
-  parent_management_group_id = data.azurerm_management_group.tenant_root.id
+  display_name = "Platform"
+  # Omitting parent_management_group_id defaults to Tenant Root
 
   lifecycle {
     prevent_destroy = true
@@ -37,8 +33,8 @@ resource "azurerm_management_group" "connectivity" {
 
 # Landing Zones Management Group
 resource "azurerm_management_group" "landing_zones" {
-  display_name               = "LandingZones"
-  parent_management_group_id = data.azurerm_management_group.tenant_root.id
+  display_name = "LandingZones"
+  # Omitting parent_management_group_id defaults to Tenant Root
 
   lifecycle {
     prevent_destroy = true

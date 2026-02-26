@@ -1,8 +1,3 @@
-output "tenant_root_id" {
-  description = "Tenant Root Management Group ID"
-  value       = data.azurerm_management_group.tenant_root.id
-}
-
 output "platform_mg_id" {
   description = "Platform Management Group ID"
   value       = azurerm_management_group.platform.id
@@ -36,10 +31,6 @@ output "nonprod_mg_id" {
 output "management_group_structure" {
   description = "Complete management group hierarchy"
   value = {
-    tenant_root = {
-      id   = data.azurerm_management_group.tenant_root.id
-      name = data.azurerm_management_group.tenant_root.display_name
-    }
     platform = {
       id   = azurerm_management_group.platform.id
       name = azurerm_management_group.platform.display_name

@@ -1,11 +1,15 @@
 # Example Terraform variables file for RBAC module
 # Copy this file to terraform.tfvars and fill in your actual values
 
-# Group owners - Use your Azure AD user object ID
+# Group owners - Use your Entra ID user object ID
 # You can find this with: az ad signed-in-user show --query id -o tsv
 group_owners = [
   "00000000-0000-0000-0000-000000000000"  # Replace with your user object ID
 ]
+
+# Subscription IDs for custom role assignments with DataActions
+subscription_workload_prod    = "00000000-0000-0000-0000-000000000000"  # Replace with your Prod subscription ID
+subscription_workload_nonprod = "00000000-0000-0000-0000-000000000000"  # Replace with your NonProd subscription ID
 
 # Optional: Override default tags
 # tags = {

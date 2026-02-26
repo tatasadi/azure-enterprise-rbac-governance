@@ -1,10 +1,6 @@
 # Data sources for management groups (created in management-groups module)
 data "azurerm_client_config" "current" {}
 
-data "azurerm_management_group" "tenant_root" {
-  name = data.azurerm_client_config.current.tenant_id
-}
-
 data "azurerm_management_group" "platform" {
   display_name = "Platform"
 }

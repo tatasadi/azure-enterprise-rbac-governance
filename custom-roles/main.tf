@@ -1,17 +1,21 @@
 data "azurerm_client_config" "current" {}
 
-data "azurerm_subscription" "prod" {
-  subscription_id = var.subscription_workload_prod
+data "azurerm_management_group" "prod" {
+  display_name = var.management_group_prod
 }
 
-data "azurerm_subscription" "nonprod" {
-  subscription_id = var.subscription_workload_nonprod
+data "azurerm_management_group" "nonprod" {
+  display_name = var.management_group_nonprod
+}
+
+data "azurerm_management_group" "landing_zones" {
+  display_name = var.management_group_landing_zones
 }
 
 # App Deployer Custom Role - Prod
 resource "azurerm_role_definition" "app_deployer_prod" {
   name        = "CR-AppDeployer-ResourceGroup-Prod"
-  scope       = data.azurerm_subscription.prod.id
+  scope       = data.azurerm_management_group.prod.id
   description = "Can deploy and manage application resources but cannot assign roles or delete resource groups. Designed for CI/CD pipelines."
 
   permissions {
@@ -64,14 +68,14 @@ resource "azurerm_role_definition" "app_deployer_prod" {
   }
 
   assignable_scopes = [
-    data.azurerm_subscription.prod.id,
+    data.azurerm_management_group.prod.id,
   ]
 }
 
 # App Deployer Custom Role - NonProd
 resource "azurerm_role_definition" "app_deployer_nonprod" {
   name        = "CR-AppDeployer-ResourceGroup-NonProd"
-  scope       = data.azurerm_subscription.nonprod.id
+  scope       = data.azurerm_management_group.nonprod.id
   description = "Can deploy and manage application resources but cannot assign roles or delete resource groups. Designed for CI/CD pipelines."
 
   permissions {
@@ -124,14 +128,14 @@ resource "azurerm_role_definition" "app_deployer_nonprod" {
   }
 
   assignable_scopes = [
-    data.azurerm_subscription.nonprod.id,
+    data.azurerm_management_group.nonprod.id,
   ]
 }
 
-# Security Reader Custom Role - Tenant-wide
+# Security Reader Custom Role - LandingZones level (covers both Prod and NonProd)
 resource "azurerm_role_definition" "security_reader" {
   name        = "CR-SecurityReader-Enterprise"
-  scope       = data.azurerm_subscription.prod.id
+  scope       = data.azurerm_management_group.landing_zones.id
   description = "Read-only access to security-related resources including PIM, Policy compliance, role assignments, and security settings."
 
   permissions {
@@ -153,14 +157,13 @@ resource "azurerm_role_definition" "security_reader" {
 
     data_actions = [
       "Microsoft.KeyVault/vaults/secrets/getSecret/action",
-      "Microsoft.KeyVault/vaults/certificates/get/action",
+      "Microsoft.KeyVault/vaults/certificates/read",
     ]
 
     not_data_actions = []
   }
 
   assignable_scopes = [
-    data.azurerm_subscription.prod.id,
-    data.azurerm_subscription.nonprod.id,
+    data.azurerm_management_group.landing_zones.id,
   ]
 }

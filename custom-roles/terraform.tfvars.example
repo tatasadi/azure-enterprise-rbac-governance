@@ -1,5 +1,6 @@
 # Example Terraform variables file for Custom Roles module
 # Copy this file to terraform.tfvars and fill in your actual values
 
-subscription_workload_prod    = "26776e0c-ecda-4b0b-ab6f-0ee1e8f08e32"
-subscription_workload_nonprod = "485fb256-12fa-47ce-a411-52d534ce1e89"
+# Management group display names where custom roles will be created
+management_group_prod    = "Prod"
+management_group_nonprod = "NonProd"

@@ -19,7 +19,7 @@
   "NotActions": [],
   "DataActions": [
     "Microsoft.KeyVault/vaults/secrets/getSecret/action",
-    "Microsoft.KeyVault/vaults/certificates/get/action"
+    "Microsoft.KeyVault/vaults/certificates/read"
   ],
   "NotDataActions": [],
   "AssignableScopes": [
