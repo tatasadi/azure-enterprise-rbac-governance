@@ -1,0 +1,6 @@
+# Example Terraform variables file for Policies module
+# Copy this file to terraform.tfvars and fill in your values
+
+# Policy Effects - Start with Audit mode, then switch to Deny after validation
+deny_owner_effect    = "Audit"  # Change to "Deny" after testing
+require_tags_effect  = "Audit"  # Change to "Deny" after testing

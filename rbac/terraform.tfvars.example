@@ -1,0 +1,16 @@
+# Example Terraform variables file for RBAC module
+# Copy this file to terraform.tfvars and fill in your actual values
+
+# Group owners - Use your Azure AD user object ID
+# You can find this with: az ad signed-in-user show --query id -o tsv
+group_owners = [
+  "00000000-0000-0000-0000-000000000000"  # Replace with your user object ID
+]
+
+# Optional: Override default tags
+# tags = {
+#   ManagedBy   = "Terraform"
+#   Project     = "Azure-RBAC-Governance"
+#   Environment = "Enterprise"
+#   CostCenter  = "IT-Security"
+# }

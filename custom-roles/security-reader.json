@@ -1,0 +1,28 @@
+{
+  "Name": "CR-SecurityReader-Subscription",
+  "Id": null,
+  "IsCustom": true,
+  "Description": "Read-only access to security-related resources including PIM assignments, Azure Policy compliance, role assignments, and security settings. No write permissions.",
+  "Actions": [
+    "*/read",
+    "Microsoft.Authorization/*/read",
+    "Microsoft.PolicyInsights/*/read",
+    "Microsoft.Security/*/read",
+    "Microsoft.SecurityInsights/*/read",
+    "Microsoft.OperationalInsights/workspaces/query/read",
+    "Microsoft.Insights/*/read",
+    "Microsoft.Management/managementGroups/read",
+    "Microsoft.Resources/subscriptions/resourceGroups/read",
+    "Microsoft.Resources/deployments/read",
+    "Microsoft.Support/*/read"
+  ],
+  "NotActions": [],
+  "DataActions": [
+    "Microsoft.KeyVault/vaults/secrets/getSecret/action",
+    "Microsoft.KeyVault/vaults/certificates/get/action"
+  ],
+  "NotDataActions": [],
+  "AssignableScopes": [
+    "/subscriptions/SUBSCRIPTION_ID_PLACEHOLDER"
+  ]
+}

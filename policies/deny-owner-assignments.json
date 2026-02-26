@@ -1,0 +1,48 @@
+{
+  "properties": {
+    "displayName": "Deny Owner role assignment at subscription scope",
+    "policyType": "Custom",
+    "mode": "All",
+    "description": "Prevents direct Owner role assignments at subscription level. Use PIM at Management Group level instead. This enforces governance and ensures privileged access is managed through PIM.",
+    "metadata": {
+      "version": "1.0.0",
+      "category": "RBAC Governance"
+    },
+    "parameters": {
+      "effect": {
+        "type": "String",
+        "metadata": {
+          "displayName": "Effect",
+          "description": "Enable or disable the execution of the policy"
+        },
+        "allowedValues": [
+          "Audit",
+          "Deny",
+          "Disabled"
+        ],
+        "defaultValue": "Deny"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "field": "type",
+            "equals": "Microsoft.Authorization/roleAssignments"
+          },
+          {
+            "field": "Microsoft.Authorization/roleAssignments/roleDefinitionId",
+            "equals": "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
+          },
+          {
+            "value": "[substring(field('Microsoft.Authorization/roleAssignments/scope'), 0, 15)]",
+            "equals": "/subscriptions/"
+          }
+        ]
+      },
+      "then": {
+        "effect": "[parameters('effect')]"
+      }
+    }
+  }
+}

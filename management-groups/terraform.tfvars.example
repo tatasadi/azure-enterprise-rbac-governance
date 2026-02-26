@@ -1,0 +1,17 @@
+# Example Terraform variables file
+# Copy this file to terraform.tfvars and fill in your actual values
+# terraform.tfvars is .gitignored to prevent committing sensitive data
+
+# Subscription IDs from your Azure environment
+subscription_platform_connectivity = "9a34c07b-e982-4353-94cf-4acdb6a4f1b1"
+subscription_platform_identity     = "7d7d762e-d7d0-4d43-9928-37e266306ca1"
+subscription_workload_prod         = "54326e0c-ecda-4b0b-ab6f-0ee1e8f08e34"
+subscription_workload_nonprod      = "655fb256-12fa-47ce-a411-52d534ce1e87"
+
+# Optional: Override default tags
+# tags = {
+#   ManagedBy   = "Terraform"
+#   Project     = "Azure-RBAC-Governance"
+#   Environment = "Enterprise"
+#   CostCenter  = "IT-Security"
+# }

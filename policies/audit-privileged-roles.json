@@ -1,0 +1,62 @@
+{
+  "properties": {
+    "displayName": "Audit permanent privileged role assignments",
+    "policyType": "Custom",
+    "mode": "All",
+    "description": "Audits permanent assignments of Owner, Contributor, and User Access Administrator roles. These should be PIM-eligible instead of permanent active assignments.",
+    "metadata": {
+      "version": "1.0.0",
+      "category": "RBAC Governance"
+    },
+    "parameters": {
+      "effect": {
+        "type": "String",
+        "metadata": {
+          "displayName": "Effect",
+          "description": "Enable or disable the execution of the policy"
+        },
+        "allowedValues": [
+          "AuditIfNotExists",
+          "Disabled"
+        ],
+        "defaultValue": "AuditIfNotExists"
+      },
+      "privilegedRoleDefinitionIds": {
+        "type": "Array",
+        "metadata": {
+          "displayName": "Privileged Role Definition IDs",
+          "description": "List of role definition IDs considered privileged"
+        },
+        "defaultValue": [
+          "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
+          "/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",
+          "/providers/Microsoft.Authorization/roleDefinitions/18d7d88d-d35e-4fb5-a5c3-7773c20a72d9"
+        ]
+      }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "field": "type",
+            "equals": "Microsoft.Authorization/roleAssignments"
+          },
+          {
+            "field": "Microsoft.Authorization/roleAssignments/roleDefinitionId",
+            "in": "[parameters('privilegedRoleDefinitionIds')]"
+          }
+        ]
+      },
+      "then": {
+        "effect": "[parameters('effect')]",
+        "details": {
+          "type": "Microsoft.Authorization/roleAssignments",
+          "existenceCondition": {
+            "field": "Microsoft.Authorization/roleAssignments/principalType",
+            "equals": "ServicePrincipal"
+          }
+        }
+      }
+    }
+  }
+}
