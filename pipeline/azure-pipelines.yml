@@ -119,9 +119,11 @@ stages:
               azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
-              workingDirectory: '$(System.DefaultWorkingDirectory)/management-groups'
               inlineScript: |
+                cd management-groups
+                echo "Current directory: $(pwd)"
                 echo "Planning Management Groups..."
+
                 terraform init \
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
                   -backend-config="storage_account_name=$(TF_STATE_SA)" \
@@ -132,18 +134,20 @@ stages:
                 terraform show -json tfplan > plan.json
 
                 echo "✓ Management Groups plan created"
+                echo "Verifying files exist:"
+                ls -lh tfplan plan.json
 
           - task: PublishPipelineArtifact@1
             displayName: 'Publish MG Plan Artifact'
             inputs:
-              targetPath: '$(System.DefaultWorkingDirectory)/management-groups/tfplan'
+              targetPath: 'management-groups/tfplan'
               artifact: 'mg-terraform-plan'
               publishLocation: 'pipeline'
 
           - task: PublishPipelineArtifact@1
             displayName: 'Publish MG Plan JSON'
             inputs:
-              targetPath: '$(System.DefaultWorkingDirectory)/management-groups/plan.json'
+              targetPath: 'management-groups/plan.json'
               artifact: 'mg-plan-json'
               publishLocation: 'pipeline'
 
@@ -161,9 +165,11 @@ stages:
               azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
-              workingDirectory: '$(System.DefaultWorkingDirectory)/rbac'
               inlineScript: |
+                cd rbac
+                echo "Current directory: $(pwd)"
                 echo "Planning RBAC..."
+
                 terraform init \
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
                   -backend-config="storage_account_name=$(TF_STATE_SA)" \
@@ -174,18 +180,20 @@ stages:
                 terraform show -json tfplan > plan.json
 
                 echo "✓ RBAC plan created"
+                echo "Verifying files exist:"
+                ls -lh tfplan plan.json
 
           - task: PublishPipelineArtifact@1
             displayName: 'Publish RBAC Plan Artifact'
             inputs:
-              targetPath: '$(System.DefaultWorkingDirectory)/rbac/tfplan'
+              targetPath: 'rbac/tfplan'
               artifact: 'rbac-terraform-plan'
               publishLocation: 'pipeline'
 
           - task: PublishPipelineArtifact@1
             displayName: 'Publish RBAC Plan JSON'
             inputs:
-              targetPath: '$(System.DefaultWorkingDirectory)/rbac/plan.json'
+              targetPath: 'rbac/plan.json'
               artifact: 'rbac-plan-json'
               publishLocation: 'pipeline'
 
@@ -203,9 +211,11 @@ stages:
               azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
-              workingDirectory: '$(System.DefaultWorkingDirectory)/custom-roles'
               inlineScript: |
+                cd custom-roles
+                echo "Current directory: $(pwd)"
                 echo "Planning Custom Roles..."
+
                 terraform init \
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
                   -backend-config="storage_account_name=$(TF_STATE_SA)" \
@@ -216,18 +226,20 @@ stages:
                 terraform show -json tfplan > plan.json
 
                 echo "✓ Custom Roles plan created"
+                echo "Verifying files exist:"
+                ls -lh tfplan plan.json
 
           - task: PublishPipelineArtifact@1
             displayName: 'Publish Custom Roles Plan Artifact'
             inputs:
-              targetPath: '$(System.DefaultWorkingDirectory)/custom-roles/tfplan'
+              targetPath: 'custom-roles/tfplan'
               artifact: 'roles-terraform-plan'
               publishLocation: 'pipeline'
 
           - task: PublishPipelineArtifact@1
             displayName: 'Publish Custom Roles Plan JSON'
             inputs:
-              targetPath: '$(System.DefaultWorkingDirectory)/custom-roles/plan.json'
+              targetPath: 'custom-roles/plan.json'
               artifact: 'roles-plan-json'
               publishLocation: 'pipeline'
 
@@ -245,9 +257,11 @@ stages:
               azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
-              workingDirectory: '$(System.DefaultWorkingDirectory)/policies'
               inlineScript: |
+                cd policies
+                echo "Current directory: $(pwd)"
                 echo "Planning Policies..."
+
                 terraform init \
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
                   -backend-config="storage_account_name=$(TF_STATE_SA)" \
@@ -258,18 +272,20 @@ stages:
                 terraform show -json tfplan > plan.json
 
                 echo "✓ Policies plan created"
+                echo "Verifying files exist:"
+                ls -lh tfplan plan.json
 
           - task: PublishPipelineArtifact@1
             displayName: 'Publish Policies Plan Artifact'
             inputs:
-              targetPath: '$(System.DefaultWorkingDirectory)/policies/tfplan'
+              targetPath: 'policies/tfplan'
               artifact: 'policies-terraform-plan'
               publishLocation: 'pipeline'
 
           - task: PublishPipelineArtifact@1
             displayName: 'Publish Policies Plan JSON'
             inputs:
-              targetPath: '$(System.DefaultWorkingDirectory)/policies/plan.json'
+              targetPath: 'policies/plan.json'
               artifact: 'policies-plan-json'
               publishLocation: 'pipeline'
 
@@ -383,9 +399,11 @@ stages:
                     azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
-                    workingDirectory: '$(System.DefaultWorkingDirectory)/management-groups'
                     inlineScript: |
+                      cd management-groups
+                      echo "Current directory: $(pwd)"
                       echo "Applying Management Groups..."
+
                       terraform init \
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
                         -backend-config="storage_account_name=$(TF_STATE_SA)" \
@@ -421,8 +439,9 @@ stages:
                     azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
-                    workingDirectory: '$(System.DefaultWorkingDirectory)/custom-roles'
                     inlineScript: |
+                      cd custom-roles
+                      echo "Current directory: $(pwd)"
                       echo "Applying Custom Roles..."
                       terraform init \
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -459,8 +478,9 @@ stages:
                     azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
-                    workingDirectory: '$(System.DefaultWorkingDirectory)/rbac'
                     inlineScript: |
+                      cd rbac
+                      echo "Current directory: $(pwd)"
                       echo "Applying RBAC..."
                       terraform init \
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -497,8 +517,9 @@ stages:
                     azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
-                    workingDirectory: '$(System.DefaultWorkingDirectory)/policies'
                     inlineScript: |
+                      cd policies
+                      echo "Current directory: $(pwd)"
                       echo "Applying Policies..."
                       terraform init \
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
