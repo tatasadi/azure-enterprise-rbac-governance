@@ -32,8 +32,6 @@ variables:
   - group: terraform-variables
   - name: TF_VERSION
     value: '1.5.7'
-  - name: WORKING_DIR
-    value: '$(System.DefaultWorkingDirectory)'
 
 stages:
   # ==============================================================================
@@ -121,7 +119,7 @@ stages:
               azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
-              workingDirectory: '$(WORKING_DIR)/management-groups'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/management-groups'
               inlineScript: |
                 echo "Planning Management Groups..."
                 terraform init \
@@ -135,13 +133,19 @@ stages:
 
                 echo "✓ Management Groups plan created"
 
-          - publish: $(WORKING_DIR)/management-groups/tfplan
-            artifact: mg-terraform-plan
+          - task: PublishPipelineArtifact@1
             displayName: 'Publish MG Plan Artifact'
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)/management-groups/tfplan'
+              artifact: 'mg-terraform-plan'
+              publishLocation: 'pipeline'
 
-          - publish: $(WORKING_DIR)/management-groups/plan.json
-            artifact: mg-plan-json
+          - task: PublishPipelineArtifact@1
             displayName: 'Publish MG Plan JSON'
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)/management-groups/plan.json'
+              artifact: 'mg-plan-json'
+              publishLocation: 'pipeline'
 
       - job: PlanRBAC
         displayName: 'Plan RBAC'
@@ -157,7 +161,7 @@ stages:
               azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
-              workingDirectory: '$(WORKING_DIR)/rbac'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/rbac'
               inlineScript: |
                 echo "Planning RBAC..."
                 terraform init \
@@ -171,13 +175,19 @@ stages:
 
                 echo "✓ RBAC plan created"
 
-          - publish: $(WORKING_DIR)/rbac/tfplan
-            artifact: rbac-terraform-plan
+          - task: PublishPipelineArtifact@1
             displayName: 'Publish RBAC Plan Artifact'
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)/rbac/tfplan'
+              artifact: 'rbac-terraform-plan'
+              publishLocation: 'pipeline'
 
-          - publish: $(WORKING_DIR)/rbac/plan.json
-            artifact: rbac-plan-json
+          - task: PublishPipelineArtifact@1
             displayName: 'Publish RBAC Plan JSON'
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)/rbac/plan.json'
+              artifact: 'rbac-plan-json'
+              publishLocation: 'pipeline'
 
       - job: PlanCustomRoles
         displayName: 'Plan Custom Roles'
@@ -193,7 +203,7 @@ stages:
               azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
-              workingDirectory: '$(WORKING_DIR)/custom-roles'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/custom-roles'
               inlineScript: |
                 echo "Planning Custom Roles..."
                 terraform init \
@@ -207,13 +217,19 @@ stages:
 
                 echo "✓ Custom Roles plan created"
 
-          - publish: $(WORKING_DIR)/custom-roles/tfplan
-            artifact: roles-terraform-plan
+          - task: PublishPipelineArtifact@1
             displayName: 'Publish Custom Roles Plan Artifact'
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)/custom-roles/tfplan'
+              artifact: 'roles-terraform-plan'
+              publishLocation: 'pipeline'
 
-          - publish: $(WORKING_DIR)/custom-roles/plan.json
-            artifact: roles-plan-json
+          - task: PublishPipelineArtifact@1
             displayName: 'Publish Custom Roles Plan JSON'
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)/custom-roles/plan.json'
+              artifact: 'roles-plan-json'
+              publishLocation: 'pipeline'
 
       - job: PlanPolicies
         displayName: 'Plan Policies'
@@ -229,7 +245,7 @@ stages:
               azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
-              workingDirectory: '$(WORKING_DIR)/policies'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/policies'
               inlineScript: |
                 echo "Planning Policies..."
                 terraform init \
@@ -243,13 +259,19 @@ stages:
 
                 echo "✓ Policies plan created"
 
-          - publish: $(WORKING_DIR)/policies/tfplan
-            artifact: policies-terraform-plan
+          - task: PublishPipelineArtifact@1
             displayName: 'Publish Policies Plan Artifact'
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)/policies/tfplan'
+              artifact: 'policies-terraform-plan'
+              publishLocation: 'pipeline'
 
-          - publish: $(WORKING_DIR)/policies/plan.json
-            artifact: policies-plan-json
+          - task: PublishPipelineArtifact@1
             displayName: 'Publish Policies Plan JSON'
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)/policies/plan.json'
+              artifact: 'policies-plan-json'
+              publishLocation: 'pipeline'
 
       - job: AnalyzeRBACChanges
         displayName: 'Analyze RBAC Changes'
@@ -272,7 +294,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                python3 $(WORKING_DIR)/pipeline/scripts/parse-rbac-changes.py \
+                python3 $(System.DefaultWorkingDirectory)/pipeline/scripts/parse-rbac-changes.py \
                   $(Pipeline.Workspace)/rbac-plan-json/plan.json
 
           - task: PublishBuildArtifacts@1
@@ -361,7 +383,7 @@ stages:
                     azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
-                    workingDirectory: '$(WORKING_DIR)/management-groups'
+                    workingDirectory: '$(System.DefaultWorkingDirectory)/management-groups'
                     inlineScript: |
                       echo "Applying Management Groups..."
                       terraform init \
@@ -399,7 +421,7 @@ stages:
                     azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
-                    workingDirectory: '$(WORKING_DIR)/custom-roles'
+                    workingDirectory: '$(System.DefaultWorkingDirectory)/custom-roles'
                     inlineScript: |
                       echo "Applying Custom Roles..."
                       terraform init \
@@ -437,7 +459,7 @@ stages:
                     azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
-                    workingDirectory: '$(WORKING_DIR)/rbac'
+                    workingDirectory: '$(System.DefaultWorkingDirectory)/rbac'
                     inlineScript: |
                       echo "Applying RBAC..."
                       terraform init \
@@ -475,7 +497,7 @@ stages:
                     azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
-                    workingDirectory: '$(WORKING_DIR)/policies'
+                    workingDirectory: '$(System.DefaultWorkingDirectory)/policies'
                     inlineScript: |
                       echo "Applying Policies..."
                       terraform init \
