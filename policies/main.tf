@@ -85,7 +85,7 @@ resource "azurerm_policy_definition" "audit_privileged_roles_landingzones" {
     if = {
       allOf = [
         {
-          field = "type"
+          field  = "type"
           equals = "Microsoft.Authorization/roleAssignments"
         },
         {
@@ -137,7 +137,7 @@ resource "azurerm_policy_definition" "audit_privileged_roles_platform" {
     if = {
       allOf = [
         {
-          field = "type"
+          field  = "type"
           equals = "Microsoft.Authorization/roleAssignments"
         },
         {
@@ -189,7 +189,7 @@ resource "azurerm_policy_definition" "require_rg_tags" {
     if = {
       allOf = [
         {
-          field = "type"
+          field  = "type"
           equals = "Microsoft.Resources/subscriptions/resourceGroups"
         },
         {

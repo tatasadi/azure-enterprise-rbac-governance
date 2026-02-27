@@ -90,14 +90,14 @@ resource "azurerm_role_assignment" "security_reader_landing_zones" {
 
 resource "azurerm_role_assignment" "security_reader_workloads_prod" {
   scope                = "/subscriptions/${var.subscription_workload_prod}"
-  role_definition_name = "CR-SecurityReader-Enterprise"  # Custom role with DataActions
+  role_definition_name = "CR-SecurityReader-Enterprise" # Custom role with DataActions
   principal_id         = azuread_group.security_reader.object_id
   description          = "Security team - Enhanced reader for Prod workload compliance and Key Vault audits"
 }
 
 resource "azurerm_role_assignment" "security_reader_workloads_nonprod" {
   scope                = "/subscriptions/${var.subscription_workload_nonprod}"
-  role_definition_name = "CR-SecurityReader-Enterprise"  # Custom role with DataActions
+  role_definition_name = "CR-SecurityReader-Enterprise" # Custom role with DataActions
   principal_id         = azuread_group.security_reader.object_id
   description          = "Security team - Enhanced reader for NonProd workload compliance and Key Vault audits"
 }
@@ -138,14 +138,14 @@ resource "azurerm_role_assignment" "consultant_contributor" {
 
 resource "azurerm_role_assignment" "devops_prod" {
   scope                = data.azurerm_management_group.prod.id
-  role_definition_name = "CR-AppDeployer-ResourceGroup-Prod"  # Custom role
+  role_definition_name = "CR-AppDeployer-ResourceGroup-Prod" # Custom role
   principal_id         = azuread_group.devops_deployer_prod.object_id
   description          = "DevOps pipelines - Deployer role for Prod (service principals only)"
 }
 
 resource "azurerm_role_assignment" "devops_nonprod" {
   scope                = data.azurerm_management_group.nonprod.id
-  role_definition_name = "CR-AppDeployer-ResourceGroup-NonProd"  # Custom role
+  role_definition_name = "CR-AppDeployer-ResourceGroup-NonProd" # Custom role
   principal_id         = azuread_group.devops_deployer_nonprod.object_id
   description          = "DevOps pipelines - Deployer role for NonProd (service principals only)"
 }

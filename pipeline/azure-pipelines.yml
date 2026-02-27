@@ -1,0 +1,519 @@
+# Azure Enterprise RBAC & Governance Pipeline
+# This pipeline manages RBAC, PIM, and Policy deployments with approval gates
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - management-groups/**
+      - rbac/**
+      - custom-roles/**
+      - policies/**
+      - pim/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - management-groups/**
+      - rbac/**
+      - custom-roles/**
+      - policies/**
+      - pim/**
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: terraform-variables
+  - name: TF_VERSION
+    value: '1.5.7'
+  - name: WORKING_DIR
+    value: '$(System.DefaultWorkingDirectory)'
+
+stages:
+  # ==============================================================================
+  # STAGE 1: VALIDATION
+  # ==============================================================================
+  - stage: Validate
+    displayName: 'Validate Terraform Code'
+    jobs:
+      - job: TerraformValidate
+        displayName: 'Terraform Validation'
+        steps:
+          - task: TerraformInstaller@0
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: $(TF_VERSION)
+
+          - task: Bash@3
+            displayName: 'Terraform Format Check'
+            inputs:
+              targetType: 'inline'
+              script: |
+                echo "Checking Terraform formatting..."
+                terraform fmt -check -recursive
+                if [ $? -ne 0 ]; then
+                  echo "##vso[task.logissue type=error]Terraform files are not properly formatted. Run 'terraform fmt -recursive' locally."
+                  exit 1
+                fi
+                echo "✓ All Terraform files are properly formatted"
+
+          - task: Bash@3
+            displayName: 'Terraform Init (Validation Only)'
+            inputs:
+              targetType: 'inline'
+              script: |
+                echo "Initializing Terraform modules for validation..."
+                for dir in management-groups rbac custom-roles policies pim; do
+                  if [ -d "$dir" ]; then
+                    echo "Validating $dir..."
+                    cd $dir
+                    terraform init -backend=false
+                    terraform validate
+                    cd ..
+                  fi
+                done
+
+      - job: SecurityScanning
+        displayName: 'Security Scanning'
+        dependsOn: TerraformValidate
+        steps:
+          - task: Bash@3
+            displayName: 'Install Checkov'
+            inputs:
+              targetType: 'inline'
+              script: |
+                pip3 install checkov
+
+          - task: Bash@3
+            displayName: 'Run Checkov Security Scan'
+            inputs:
+              targetType: 'inline'
+              script: |
+                echo "Running Checkov security scan..."
+                checkov -d . --framework terraform --soft-fail
+                echo "✓ Security scan completed"
+
+  # ==============================================================================
+  # STAGE 2: PLAN
+  # ==============================================================================
+  - stage: Plan
+    displayName: 'Terraform Plan'
+    dependsOn: Validate
+    condition: succeeded()
+    jobs:
+      - job: PlanManagementGroups
+        displayName: 'Plan Management Groups'
+        steps:
+          - task: TerraformInstaller@0
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: $(TF_VERSION)
+
+          - task: AzureCLI@2
+            displayName: 'Terraform Plan - Management Groups'
+            inputs:
+              azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              workingDirectory: '$(WORKING_DIR)/management-groups'
+              inlineScript: |
+                echo "Planning Management Groups..."
+                terraform init \
+                  -backend-config="resource_group_name=$(TF_STATE_RG)" \
+                  -backend-config="storage_account_name=$(TF_STATE_SA)" \
+                  -backend-config="container_name=$(TF_STATE_CONTAINER)" \
+                  -backend-config="key=management-groups.tfstate"
+
+                terraform plan -out=tfplan
+                terraform show -json tfplan > plan.json
+
+                echo "✓ Management Groups plan created"
+
+          - publish: $(WORKING_DIR)/management-groups/tfplan
+            artifact: mg-terraform-plan
+            displayName: 'Publish MG Plan Artifact'
+
+          - publish: $(WORKING_DIR)/management-groups/plan.json
+            artifact: mg-plan-json
+            displayName: 'Publish MG Plan JSON'
+
+      - job: PlanRBAC
+        displayName: 'Plan RBAC'
+        steps:
+          - task: TerraformInstaller@0
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: $(TF_VERSION)
+
+          - task: AzureCLI@2
+            displayName: 'Terraform Plan - RBAC'
+            inputs:
+              azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              workingDirectory: '$(WORKING_DIR)/rbac'
+              inlineScript: |
+                echo "Planning RBAC..."
+                terraform init \
+                  -backend-config="resource_group_name=$(TF_STATE_RG)" \
+                  -backend-config="storage_account_name=$(TF_STATE_SA)" \
+                  -backend-config="container_name=$(TF_STATE_CONTAINER)" \
+                  -backend-config="key=rbac.tfstate"
+
+                terraform plan -out=tfplan
+                terraform show -json tfplan > plan.json
+
+                echo "✓ RBAC plan created"
+
+          - publish: $(WORKING_DIR)/rbac/tfplan
+            artifact: rbac-terraform-plan
+            displayName: 'Publish RBAC Plan Artifact'
+
+          - publish: $(WORKING_DIR)/rbac/plan.json
+            artifact: rbac-plan-json
+            displayName: 'Publish RBAC Plan JSON'
+
+      - job: PlanCustomRoles
+        displayName: 'Plan Custom Roles'
+        steps:
+          - task: TerraformInstaller@0
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: $(TF_VERSION)
+
+          - task: AzureCLI@2
+            displayName: 'Terraform Plan - Custom Roles'
+            inputs:
+              azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              workingDirectory: '$(WORKING_DIR)/custom-roles'
+              inlineScript: |
+                echo "Planning Custom Roles..."
+                terraform init \
+                  -backend-config="resource_group_name=$(TF_STATE_RG)" \
+                  -backend-config="storage_account_name=$(TF_STATE_SA)" \
+                  -backend-config="container_name=$(TF_STATE_CONTAINER)" \
+                  -backend-config="key=custom-roles.tfstate"
+
+                terraform plan -out=tfplan
+                terraform show -json tfplan > plan.json
+
+                echo "✓ Custom Roles plan created"
+
+          - publish: $(WORKING_DIR)/custom-roles/tfplan
+            artifact: roles-terraform-plan
+            displayName: 'Publish Custom Roles Plan Artifact'
+
+          - publish: $(WORKING_DIR)/custom-roles/plan.json
+            artifact: roles-plan-json
+            displayName: 'Publish Custom Roles Plan JSON'
+
+      - job: PlanPolicies
+        displayName: 'Plan Policies'
+        steps:
+          - task: TerraformInstaller@0
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: $(TF_VERSION)
+
+          - task: AzureCLI@2
+            displayName: 'Terraform Plan - Policies'
+            inputs:
+              azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              workingDirectory: '$(WORKING_DIR)/policies'
+              inlineScript: |
+                echo "Planning Policies..."
+                terraform init \
+                  -backend-config="resource_group_name=$(TF_STATE_RG)" \
+                  -backend-config="storage_account_name=$(TF_STATE_SA)" \
+                  -backend-config="container_name=$(TF_STATE_CONTAINER)" \
+                  -backend-config="key=policies.tfstate"
+
+                terraform plan -out=tfplan
+                terraform show -json tfplan > plan.json
+
+                echo "✓ Policies plan created"
+
+          - publish: $(WORKING_DIR)/policies/tfplan
+            artifact: policies-terraform-plan
+            displayName: 'Publish Policies Plan Artifact'
+
+          - publish: $(WORKING_DIR)/policies/plan.json
+            artifact: policies-plan-json
+            displayName: 'Publish Policies Plan JSON'
+
+      - job: AnalyzeRBACChanges
+        displayName: 'Analyze RBAC Changes'
+        dependsOn:
+          - PlanManagementGroups
+          - PlanRBAC
+          - PlanCustomRoles
+          - PlanPolicies
+        steps:
+          - download: current
+            artifact: rbac-plan-json
+
+          - task: UsePythonVersion@0
+            displayName: 'Use Python 3.x'
+            inputs:
+              versionSpec: '3.x'
+
+          - task: Bash@3
+            displayName: 'Parse RBAC Changes'
+            inputs:
+              targetType: 'inline'
+              script: |
+                python3 $(WORKING_DIR)/pipeline/scripts/parse-rbac-changes.py \
+                  $(Pipeline.Workspace)/rbac-plan-json/plan.json
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish RBAC Change Summary'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/rbac-changes.md'
+              ArtifactName: 'rbac-change-summary'
+            condition: succeededOrFailed()
+
+  # ==============================================================================
+  # STAGE 3: APPROVAL
+  # ==============================================================================
+  - stage: Approve
+    displayName: 'Manual Approval Gate'
+    dependsOn: Plan
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: ApprovalGate
+        displayName: 'Security & Platform Team Approval'
+        pool: server
+        timeoutInMinutes: 10080  # 7 days
+        steps:
+          - task: ManualValidation@0
+            displayName: 'Approve RBAC & Governance Changes'
+            inputs:
+              notifyUsers: |
+                $(SECURITY_TEAM_EMAIL)
+                $(PLATFORM_TEAM_EMAIL)
+              instructions: |
+                CRITICAL: Review Terraform plans for RBAC, PIM, and Policy changes.
+
+                📋 Review Checklist:
+                ✓ Download and review all plan artifacts
+                ✓ Check RBAC Change Summary for role assignment modifications
+                ✓ Verify no unauthorized privilege escalations
+                ✓ Confirm changes align with approved change ticket
+                ✓ Validate custom role permissions are least-privilege
+                ✓ Review policy assignments and exemptions
+
+                ⚠️  High-Risk Changes to Watch For:
+                - New Owner role assignments
+                - Modifications to PIM policies
+                - Changes to deny policies
+                - Custom role permission expansions
+
+                📎 Artifacts to Review:
+                - mg-terraform-plan (Management Groups)
+                - rbac-terraform-plan (Role Assignments)
+                - roles-terraform-plan (Custom Roles)
+                - policies-terraform-plan (Azure Policies)
+                - rbac-change-summary (RBAC Diff)
+
+                🎟️  Required: Link to approved change ticket
+
+                Approve only if all checks pass and change is authorized.
+              onTimeout: 'reject'
+
+  # ==============================================================================
+  # STAGE 4: APPLY
+  # ==============================================================================
+  - stage: Apply
+    displayName: 'Terraform Apply'
+    dependsOn: Approve
+    condition: succeeded()
+    jobs:
+      - deployment: ApplyManagementGroups
+        displayName: 'Apply Management Groups'
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: TerraformInstaller@0
+                  displayName: 'Install Terraform'
+                  inputs:
+                    terraformVersion: $(TF_VERSION)
+
+                - download: current
+                  artifact: mg-terraform-plan
+
+                - checkout: self
+
+                - task: AzureCLI@2
+                  displayName: 'Terraform Apply - Management Groups'
+                  inputs:
+                    azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    workingDirectory: '$(WORKING_DIR)/management-groups'
+                    inlineScript: |
+                      echo "Applying Management Groups..."
+                      terraform init \
+                        -backend-config="resource_group_name=$(TF_STATE_RG)" \
+                        -backend-config="storage_account_name=$(TF_STATE_SA)" \
+                        -backend-config="container_name=$(TF_STATE_CONTAINER)" \
+                        -backend-config="key=management-groups.tfstate"
+
+                      terraform apply -auto-approve \
+                        $(Pipeline.Workspace)/mg-terraform-plan/tfplan
+
+                      echo "✓ Management Groups applied successfully"
+
+      - deployment: ApplyCustomRoles
+        displayName: 'Apply Custom Roles'
+        dependsOn: ApplyManagementGroups
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: TerraformInstaller@0
+                  displayName: 'Install Terraform'
+                  inputs:
+                    terraformVersion: $(TF_VERSION)
+
+                - download: current
+                  artifact: roles-terraform-plan
+
+                - checkout: self
+
+                - task: AzureCLI@2
+                  displayName: 'Terraform Apply - Custom Roles'
+                  inputs:
+                    azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    workingDirectory: '$(WORKING_DIR)/custom-roles'
+                    inlineScript: |
+                      echo "Applying Custom Roles..."
+                      terraform init \
+                        -backend-config="resource_group_name=$(TF_STATE_RG)" \
+                        -backend-config="storage_account_name=$(TF_STATE_SA)" \
+                        -backend-config="container_name=$(TF_STATE_CONTAINER)" \
+                        -backend-config="key=custom-roles.tfstate"
+
+                      terraform apply -auto-approve \
+                        $(Pipeline.Workspace)/roles-terraform-plan/tfplan
+
+                      echo "✓ Custom Roles applied successfully"
+
+      - deployment: ApplyRBAC
+        displayName: 'Apply RBAC'
+        dependsOn: ApplyCustomRoles
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: TerraformInstaller@0
+                  displayName: 'Install Terraform'
+                  inputs:
+                    terraformVersion: $(TF_VERSION)
+
+                - download: current
+                  artifact: rbac-terraform-plan
+
+                - checkout: self
+
+                - task: AzureCLI@2
+                  displayName: 'Terraform Apply - RBAC'
+                  inputs:
+                    azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    workingDirectory: '$(WORKING_DIR)/rbac'
+                    inlineScript: |
+                      echo "Applying RBAC..."
+                      terraform init \
+                        -backend-config="resource_group_name=$(TF_STATE_RG)" \
+                        -backend-config="storage_account_name=$(TF_STATE_SA)" \
+                        -backend-config="container_name=$(TF_STATE_CONTAINER)" \
+                        -backend-config="key=rbac.tfstate"
+
+                      terraform apply -auto-approve \
+                        $(Pipeline.Workspace)/rbac-terraform-plan/tfplan
+
+                      echo "✓ RBAC applied successfully"
+
+      - deployment: ApplyPolicies
+        displayName: 'Apply Policies'
+        dependsOn: ApplyRBAC
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: TerraformInstaller@0
+                  displayName: 'Install Terraform'
+                  inputs:
+                    terraformVersion: $(TF_VERSION)
+
+                - download: current
+                  artifact: policies-terraform-plan
+
+                - checkout: self
+
+                - task: AzureCLI@2
+                  displayName: 'Terraform Apply - Policies'
+                  inputs:
+                    azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    workingDirectory: '$(WORKING_DIR)/policies'
+                    inlineScript: |
+                      echo "Applying Policies..."
+                      terraform init \
+                        -backend-config="resource_group_name=$(TF_STATE_RG)" \
+                        -backend-config="storage_account_name=$(TF_STATE_SA)" \
+                        -backend-config="container_name=$(TF_STATE_CONTAINER)" \
+                        -backend-config="key=policies.tfstate"
+
+                      terraform apply -auto-approve \
+                        $(Pipeline.Workspace)/policies-terraform-plan/tfplan
+
+                      echo "✓ Policies applied successfully"
+
+                - task: Bash@3
+                  displayName: 'Generate Deployment Summary'
+                  inputs:
+                    targetType: 'inline'
+                    script: |
+                      echo "## 🎉 Azure RBAC & Governance Deployment Complete"
+                      echo ""
+                      echo "### Deployment Summary"
+                      echo "- **Pipeline Run:** $(Build.BuildNumber)"
+                      echo "- **Triggered By:** $(Build.RequestedFor)"
+                      echo "- **Timestamp:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+                      echo ""
+                      echo "### Components Deployed"
+                      echo "✓ Management Groups"
+                      echo "✓ Custom RBAC Roles"
+                      echo "✓ Role Assignments"
+                      echo "✓ Azure Policies"
+                      echo ""
+                      echo "### Next Steps"
+                      echo "1. Verify changes in Azure Portal"
+                      echo "2. Test PIM activation workflows"
+                      echo "3. Review policy compliance dashboard"
+                      echo "4. Update documentation if needed"
+                      echo ""
+                      echo "### Monitoring"
+                      echo "- Monitor Azure Activity Log for the next 24-48 hours"
+                      echo "- Review PIM activation requests"
+                      echo "- Check Azure Policy compliance status"
