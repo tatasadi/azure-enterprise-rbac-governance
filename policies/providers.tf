@@ -13,6 +13,7 @@ terraform {
     storage_account_name = "sttfstateta"
     container_name       = "rbac-governance"
     key                  = "policies.tfstate"
+    use_azuread_auth     = true
   }
 }
 
