@@ -119,10 +119,18 @@ stages:
               azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
               inlineScript: |
                 cd management-groups
                 echo "Current directory: $(pwd)"
                 echo "Planning Management Groups..."
+
+                # Configure Terraform to use Service Principal authentication
+                export ARM_CLIENT_ID=$servicePrincipalId
+                export ARM_CLIENT_SECRET=$servicePrincipalKey
+                export ARM_TENANT_ID=$tenantId
+                export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+                export ARM_USE_CLI=false
 
                 terraform init \
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -165,10 +173,18 @@ stages:
               azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
               inlineScript: |
                 cd rbac
                 echo "Current directory: $(pwd)"
                 echo "Planning RBAC..."
+
+                # Configure Terraform to use Service Principal authentication
+                export ARM_CLIENT_ID=$servicePrincipalId
+                export ARM_CLIENT_SECRET=$servicePrincipalKey
+                export ARM_TENANT_ID=$tenantId
+                export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+                export ARM_USE_CLI=false
 
                 terraform init \
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -211,10 +227,18 @@ stages:
               azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
               inlineScript: |
                 cd custom-roles
                 echo "Current directory: $(pwd)"
                 echo "Planning Custom Roles..."
+
+                # Configure Terraform to use Service Principal authentication
+                export ARM_CLIENT_ID=$servicePrincipalId
+                export ARM_CLIENT_SECRET=$servicePrincipalKey
+                export ARM_TENANT_ID=$tenantId
+                export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+                export ARM_USE_CLI=false
 
                 terraform init \
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -257,10 +281,18 @@ stages:
               azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
               inlineScript: |
                 cd policies
                 echo "Current directory: $(pwd)"
                 echo "Planning Policies..."
+
+                # Configure Terraform to use Service Principal authentication
+                export ARM_CLIENT_ID=$servicePrincipalId
+                export ARM_CLIENT_SECRET=$servicePrincipalKey
+                export ARM_TENANT_ID=$tenantId
+                export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+                export ARM_USE_CLI=false
 
                 terraform init \
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -399,10 +431,18 @@ stages:
                     azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
+                    addSpnToEnvironment: true
                     inlineScript: |
                       cd management-groups
                       echo "Current directory: $(pwd)"
                       echo "Applying Management Groups..."
+
+                      # Configure Terraform to use Service Principal authentication
+                      export ARM_CLIENT_ID=$servicePrincipalId
+                      export ARM_CLIENT_SECRET=$servicePrincipalKey
+                      export ARM_TENANT_ID=$tenantId
+                      export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+                      export ARM_USE_CLI=false
 
                       terraform init \
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -439,10 +479,19 @@ stages:
                     azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
+                    addSpnToEnvironment: true
                     inlineScript: |
                       cd custom-roles
                       echo "Current directory: $(pwd)"
                       echo "Applying Custom Roles..."
+
+                      # Configure Terraform to use Service Principal authentication
+                      export ARM_CLIENT_ID=$servicePrincipalId
+                      export ARM_CLIENT_SECRET=$servicePrincipalKey
+                      export ARM_TENANT_ID=$tenantId
+                      export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+                      export ARM_USE_CLI=false
+
                       terraform init \
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
                         -backend-config="storage_account_name=$(TF_STATE_SA)" \
@@ -478,10 +527,19 @@ stages:
                     azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
+                    addSpnToEnvironment: true
                     inlineScript: |
                       cd rbac
                       echo "Current directory: $(pwd)"
                       echo "Applying RBAC..."
+
+                      # Configure Terraform to use Service Principal authentication
+                      export ARM_CLIENT_ID=$servicePrincipalId
+                      export ARM_CLIENT_SECRET=$servicePrincipalKey
+                      export ARM_TENANT_ID=$tenantId
+                      export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+                      export ARM_USE_CLI=false
+
                       terraform init \
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
                         -backend-config="storage_account_name=$(TF_STATE_SA)" \
@@ -517,10 +575,19 @@ stages:
                     azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
+                    addSpnToEnvironment: true
                     inlineScript: |
                       cd policies
                       echo "Current directory: $(pwd)"
                       echo "Applying Policies..."
+
+                      # Configure Terraform to use Service Principal authentication
+                      export ARM_CLIENT_ID=$servicePrincipalId
+                      export ARM_CLIENT_SECRET=$servicePrincipalKey
+                      export ARM_TENANT_ID=$tenantId
+                      export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+                      export ARM_USE_CLI=false
+
                       terraform init \
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
                         -backend-config="storage_account_name=$(TF_STATE_SA)" \
