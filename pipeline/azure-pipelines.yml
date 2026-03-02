@@ -135,7 +135,8 @@ stages:
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
                   -backend-config="storage_account_name=$(TF_STATE_SA)" \
                   -backend-config="container_name=$(TF_STATE_CONTAINER)" \
-                  -backend-config="key=management-groups.tfstate"
+                  -backend-config="key=management-groups.tfstate" \
+                  -backend-config="use_azuread_auth=true"
 
                 terraform plan -out=tfplan
                 terraform show -json tfplan > plan.json
@@ -188,7 +189,8 @@ stages:
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
                   -backend-config="storage_account_name=$(TF_STATE_SA)" \
                   -backend-config="container_name=$(TF_STATE_CONTAINER)" \
-                  -backend-config="key=rbac.tfstate"
+                  -backend-config="key=rbac.tfstate" \
+                  -backend-config="use_azuread_auth=true"
 
                 terraform plan -out=tfplan
                 terraform show -json tfplan > plan.json
@@ -241,7 +243,8 @@ stages:
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
                   -backend-config="storage_account_name=$(TF_STATE_SA)" \
                   -backend-config="container_name=$(TF_STATE_CONTAINER)" \
-                  -backend-config="key=custom-roles.tfstate"
+                  -backend-config="key=custom-roles.tfstate" \
+                  -backend-config="use_azuread_auth=true"
 
                 terraform plan -out=tfplan
                 terraform show -json tfplan > plan.json
@@ -294,7 +297,8 @@ stages:
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
                   -backend-config="storage_account_name=$(TF_STATE_SA)" \
                   -backend-config="container_name=$(TF_STATE_CONTAINER)" \
-                  -backend-config="key=policies.tfstate"
+                  -backend-config="key=policies.tfstate" \
+                  -backend-config="use_azuread_auth=true"
 
                 terraform plan -out=tfplan
                 terraform show -json tfplan > plan.json
@@ -443,7 +447,8 @@ stages:
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
                         -backend-config="storage_account_name=$(TF_STATE_SA)" \
                         -backend-config="container_name=$(TF_STATE_CONTAINER)" \
-                        -backend-config="key=management-groups.tfstate"
+                        -backend-config="key=management-groups.tfstate" \
+                        -backend-config="use_azuread_auth=true"
 
                       terraform apply -auto-approve \
                         $(Pipeline.Workspace)/mg-terraform-plan/tfplan
@@ -490,7 +495,8 @@ stages:
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
                         -backend-config="storage_account_name=$(TF_STATE_SA)" \
                         -backend-config="container_name=$(TF_STATE_CONTAINER)" \
-                        -backend-config="key=custom-roles.tfstate"
+                        -backend-config="key=custom-roles.tfstate" \
+                        -backend-config="use_azuread_auth=true"
 
                       terraform apply -auto-approve \
                         $(Pipeline.Workspace)/roles-terraform-plan/tfplan
@@ -537,7 +543,8 @@ stages:
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
                         -backend-config="storage_account_name=$(TF_STATE_SA)" \
                         -backend-config="container_name=$(TF_STATE_CONTAINER)" \
-                        -backend-config="key=rbac.tfstate"
+                        -backend-config="key=rbac.tfstate" \
+                        -backend-config="use_azuread_auth=true"
 
                       terraform apply -auto-approve \
                         $(Pipeline.Workspace)/rbac-terraform-plan/tfplan
@@ -584,7 +591,8 @@ stages:
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
                         -backend-config="storage_account_name=$(TF_STATE_SA)" \
                         -backend-config="container_name=$(TF_STATE_CONTAINER)" \
-                        -backend-config="key=policies.tfstate"
+                        -backend-config="key=policies.tfstate" \
+                        -backend-config="use_azuread_auth=true"
 
                       terraform apply -auto-approve \
                         $(Pipeline.Workspace)/policies-terraform-plan/tfplan
