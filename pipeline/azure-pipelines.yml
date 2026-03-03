@@ -1,11 +1,11 @@
 # Azure Enterprise RBAC & Governance Pipeline
 # Manages Management Groups, RBAC, Custom Roles, Policies, and PIM via Terraform
+# Auth model: Azure DevOps Service Connection with Workload Identity Federation (OIDC) (no secrets)
 # Flow: Validate -> Plan (+ RBAC diff) -> Manual Approval (main only) -> Apply (prod environment)
 
 trigger:
   branches:
-    include:
-      - main
+    include: [main]
   paths:
     include:
       - management-groups/**
@@ -16,8 +16,7 @@ trigger:
 
 pr:
   branches:
-    include:
-      - main
+    include: [main]
   paths:
     include:
       - management-groups/**
@@ -33,6 +32,12 @@ variables:
   - group: terraform-variables
   - name: TF_VERSION
     value: "1.5.7"
+
+# IMPORTANT:
+# - Your Terraform provider should NOT rely on Azure CLI auth for Service Connections.
+# - Keep provider "azurerm" with use_cli = false (or omit it) and authenticate via env/OIDC.
+# - Ensure the pipeline setting "Allow scripts to access OAuth token" is enabled for jobs
+#   that run Terraform (needed for token refresh with long approval gates).
 
 stages:
   # ==============================================================================
@@ -57,7 +62,6 @@ stages:
               targetType: inline
               script: |
                 set -euo pipefail
-                echo "Checking Terraform formatting..."
                 terraform fmt -check -recursive
                 echo "✓ All Terraform files are properly formatted"
 
@@ -67,7 +71,6 @@ stages:
               targetType: inline
               script: |
                 set -euo pipefail
-                echo "Initializing Terraform modules for validation..."
                 for dir in management-groups rbac custom-roles policies pim; do
                   if [ -d "$dir" ]; then
                     echo "Validating $dir..."
@@ -99,7 +102,6 @@ stages:
                 set -euo pipefail
                 python -m pip install --upgrade pip
                 pip install checkov
-                echo "Running Checkov security scan..."
                 checkov -d . --framework terraform --soft-fail
                 echo "✓ Security scan completed"
 
@@ -125,9 +127,9 @@ stages:
             displayName: "Terraform Plan - Management Groups"
             inputs:
               azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+              addSpnToEnvironment: true
               scriptType: bash
               scriptLocation: inlineScript
-              addSpnToEnvironment: true
               inlineScript: |
                 set -euo pipefail
 
@@ -139,9 +141,14 @@ stages:
                 cd management-groups
                 echo "Planning Management Groups..."
 
-                export ARM_USE_AZUREAD=true
-                export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
+                # --- OIDC / Workload Identity Federation auth for Terraform ---
+                export ARM_CLIENT_ID="$servicePrincipalId"
+                export ARM_TENANT_ID="$tenantId"
                 export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+                export ARM_USE_OIDC=true
+                export ARM_OIDC_TOKEN="$idToken"
+                # Token refresh support (important with manual approvals / long-running pipelines)
+                export ARM_OIDC_AZURE_SERVICE_CONNECTION_ID="${AZURESUBSCRIPTION_SERVICE_CONNECTION_ID:-}"
 
                 terraform init -input=false \
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -151,8 +158,10 @@ stages:
 
                 terraform plan -input=false -no-color -out=tfplan
                 terraform show -json tfplan > plan.json
-
                 ls -lh tfplan plan.json
+            env:
+              # Enables OIDC token refresh flow for Terraform when needed
+              ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
 
           - task: PublishPipelineArtifact@1
             displayName: "Publish MG Plan"
@@ -180,9 +189,9 @@ stages:
             displayName: "Terraform Plan - RBAC"
             inputs:
               azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+              addSpnToEnvironment: true
               scriptType: bash
               scriptLocation: inlineScript
-              addSpnToEnvironment: true
               inlineScript: |
                 set -euo pipefail
 
@@ -194,9 +203,12 @@ stages:
                 cd rbac
                 echo "Planning RBAC..."
 
-                export ARM_USE_AZUREAD=true
-                export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
+                export ARM_CLIENT_ID="$servicePrincipalId"
+                export ARM_TENANT_ID="$tenantId"
                 export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+                export ARM_USE_OIDC=true
+                export ARM_OIDC_TOKEN="$idToken"
+                export ARM_OIDC_AZURE_SERVICE_CONNECTION_ID="${AZURESUBSCRIPTION_SERVICE_CONNECTION_ID:-}"
 
                 terraform init -input=false \
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -206,8 +218,9 @@ stages:
 
                 terraform plan -input=false -no-color -out=tfplan
                 terraform show -json tfplan > plan.json
-
                 ls -lh tfplan plan.json
+            env:
+              ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
 
           - task: PublishPipelineArtifact@1
             displayName: "Publish RBAC Plan"
@@ -235,9 +248,9 @@ stages:
             displayName: "Terraform Plan - Custom Roles"
             inputs:
               azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+              addSpnToEnvironment: true
               scriptType: bash
               scriptLocation: inlineScript
-              addSpnToEnvironment: true
               inlineScript: |
                 set -euo pipefail
 
@@ -249,9 +262,12 @@ stages:
                 cd custom-roles
                 echo "Planning Custom Roles..."
 
-                export ARM_USE_AZUREAD=true
-                export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
+                export ARM_CLIENT_ID="$servicePrincipalId"
+                export ARM_TENANT_ID="$tenantId"
                 export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+                export ARM_USE_OIDC=true
+                export ARM_OIDC_TOKEN="$idToken"
+                export ARM_OIDC_AZURE_SERVICE_CONNECTION_ID="${AZURESUBSCRIPTION_SERVICE_CONNECTION_ID:-}"
 
                 terraform init -input=false \
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -261,8 +277,9 @@ stages:
 
                 terraform plan -input=false -no-color -out=tfplan
                 terraform show -json tfplan > plan.json
-
                 ls -lh tfplan plan.json
+            env:
+              ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
 
           - task: PublishPipelineArtifact@1
             displayName: "Publish Custom Roles Plan"
@@ -290,9 +307,9 @@ stages:
             displayName: "Terraform Plan - Policies"
             inputs:
               azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+              addSpnToEnvironment: true
               scriptType: bash
               scriptLocation: inlineScript
-              addSpnToEnvironment: true
               inlineScript: |
                 set -euo pipefail
 
@@ -304,9 +321,12 @@ stages:
                 cd policies
                 echo "Planning Policies..."
 
-                export ARM_USE_AZUREAD=true
-                export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
+                export ARM_CLIENT_ID="$servicePrincipalId"
+                export ARM_TENANT_ID="$tenantId"
                 export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+                export ARM_USE_OIDC=true
+                export ARM_OIDC_TOKEN="$idToken"
+                export ARM_OIDC_AZURE_SERVICE_CONNECTION_ID="${AZURESUBSCRIPTION_SERVICE_CONNECTION_ID:-}"
 
                 terraform init -input=false \
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -316,8 +336,9 @@ stages:
 
                 terraform plan -input=false -no-color -out=tfplan
                 terraform show -json tfplan > plan.json
-
                 ls -lh tfplan plan.json
+            env:
+              ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
 
           - task: PublishPipelineArtifact@1
             displayName: "Publish Policies Plan"
@@ -345,9 +366,9 @@ stages:
             displayName: "Terraform Plan - PIM"
             inputs:
               azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+              addSpnToEnvironment: true
               scriptType: bash
               scriptLocation: inlineScript
-              addSpnToEnvironment: true
               inlineScript: |
                 set -euo pipefail
 
@@ -359,9 +380,12 @@ stages:
                 cd pim
                 echo "Planning PIM..."
 
-                export ARM_USE_AZUREAD=true
-                export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
+                export ARM_CLIENT_ID="$servicePrincipalId"
+                export ARM_TENANT_ID="$tenantId"
                 export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+                export ARM_USE_OIDC=true
+                export ARM_OIDC_TOKEN="$idToken"
+                export ARM_OIDC_AZURE_SERVICE_CONNECTION_ID="${AZURESUBSCRIPTION_SERVICE_CONNECTION_ID:-}"
 
                 terraform init -input=false \
                   -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -371,8 +395,9 @@ stages:
 
                 terraform plan -input=false -no-color -out=tfplan
                 terraform show -json tfplan > plan.json
-
                 ls -lh tfplan plan.json
+            env:
+              ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
 
           - task: PublishPipelineArtifact@1
             displayName: "Publish PIM Plan"
@@ -411,13 +436,13 @@ stages:
               targetType: inline
               script: |
                 set -euo pipefail
-
                 PLAN_JSON="$(Pipeline.Workspace)/rbac-plan-json/plan.json"
                 if [ ! -f "$PLAN_JSON" ]; then
                   echo "RBAC plan.json not found at $PLAN_JSON - skipping diff generation."
                   exit 0
                 fi
 
+                # Script writes to $(Build.ArtifactStagingDirectory)/rbac-changes.md
                 python3 "$(System.DefaultWorkingDirectory)/pipeline/scripts/parse-rbac-changes.py" "$PLAN_JSON"
 
                 echo "Generated:"
@@ -510,9 +535,9 @@ stages:
                   displayName: "Terraform Apply - Management Groups"
                   inputs:
                     azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+                    addSpnToEnvironment: true
                     scriptType: bash
                     scriptLocation: inlineScript
-                    addSpnToEnvironment: true
                     inlineScript: |
                       set -euo pipefail
 
@@ -524,9 +549,12 @@ stages:
                       cd management-groups
                       echo "Applying Management Groups..."
 
-                      export ARM_USE_AZUREAD=true
-                      export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
+                      export ARM_CLIENT_ID="$servicePrincipalId"
+                      export ARM_TENANT_ID="$tenantId"
                       export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+                      export ARM_USE_OIDC=true
+                      export ARM_OIDC_TOKEN="$idToken"
+                      export ARM_OIDC_AZURE_SERVICE_CONNECTION_ID="${AZURESUBSCRIPTION_SERVICE_CONNECTION_ID:-}"
 
                       terraform init -input=false \
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -538,6 +566,8 @@ stages:
                         "$(Pipeline.Workspace)/mg-terraform-plan/tfplan"
 
                       echo "✓ Management Groups applied successfully"
+                  env:
+                    ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
 
       - deployment: ApplyCustomRoles
         displayName: "Apply - Custom Roles"
@@ -561,9 +591,9 @@ stages:
                   displayName: "Terraform Apply - Custom Roles"
                   inputs:
                     azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+                    addSpnToEnvironment: true
                     scriptType: bash
                     scriptLocation: inlineScript
-                    addSpnToEnvironment: true
                     inlineScript: |
                       set -euo pipefail
 
@@ -575,9 +605,12 @@ stages:
                       cd custom-roles
                       echo "Applying Custom Roles..."
 
-                      export ARM_USE_AZUREAD=true
-                      export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
+                      export ARM_CLIENT_ID="$servicePrincipalId"
+                      export ARM_TENANT_ID="$tenantId"
                       export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+                      export ARM_USE_OIDC=true
+                      export ARM_OIDC_TOKEN="$idToken"
+                      export ARM_OIDC_AZURE_SERVICE_CONNECTION_ID="${AZURESUBSCRIPTION_SERVICE_CONNECTION_ID:-}"
 
                       terraform init -input=false \
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -589,6 +622,8 @@ stages:
                         "$(Pipeline.Workspace)/roles-terraform-plan/tfplan"
 
                       echo "✓ Custom Roles applied successfully"
+                  env:
+                    ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
 
       - deployment: ApplyRBAC
         displayName: "Apply - RBAC"
@@ -612,9 +647,9 @@ stages:
                   displayName: "Terraform Apply - RBAC"
                   inputs:
                     azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+                    addSpnToEnvironment: true
                     scriptType: bash
                     scriptLocation: inlineScript
-                    addSpnToEnvironment: true
                     inlineScript: |
                       set -euo pipefail
 
@@ -626,9 +661,12 @@ stages:
                       cd rbac
                       echo "Applying RBAC..."
 
-                      export ARM_USE_AZUREAD=true
-                      export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
+                      export ARM_CLIENT_ID="$servicePrincipalId"
+                      export ARM_TENANT_ID="$tenantId"
                       export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+                      export ARM_USE_OIDC=true
+                      export ARM_OIDC_TOKEN="$idToken"
+                      export ARM_OIDC_AZURE_SERVICE_CONNECTION_ID="${AZURESUBSCRIPTION_SERVICE_CONNECTION_ID:-}"
 
                       terraform init -input=false \
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -640,6 +678,8 @@ stages:
                         "$(Pipeline.Workspace)/rbac-terraform-plan/tfplan"
 
                       echo "✓ RBAC applied successfully"
+                  env:
+                    ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
 
       - deployment: ApplyPolicies
         displayName: "Apply - Policies"
@@ -663,9 +703,9 @@ stages:
                   displayName: "Terraform Apply - Policies"
                   inputs:
                     azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+                    addSpnToEnvironment: true
                     scriptType: bash
                     scriptLocation: inlineScript
-                    addSpnToEnvironment: true
                     inlineScript: |
                       set -euo pipefail
 
@@ -677,9 +717,12 @@ stages:
                       cd policies
                       echo "Applying Policies..."
 
-                      export ARM_USE_AZUREAD=true
-                      export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
+                      export ARM_CLIENT_ID="$servicePrincipalId"
+                      export ARM_TENANT_ID="$tenantId"
                       export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+                      export ARM_USE_OIDC=true
+                      export ARM_OIDC_TOKEN="$idToken"
+                      export ARM_OIDC_AZURE_SERVICE_CONNECTION_ID="${AZURESUBSCRIPTION_SERVICE_CONNECTION_ID:-}"
 
                       terraform init -input=false \
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -691,6 +734,8 @@ stages:
                         "$(Pipeline.Workspace)/policies-terraform-plan/tfplan"
 
                       echo "✓ Policies applied successfully"
+                  env:
+                    ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
 
       - deployment: ApplyPIM
         displayName: "Apply - PIM"
@@ -714,9 +759,9 @@ stages:
                   displayName: "Terraform Apply - PIM"
                   inputs:
                     azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+                    addSpnToEnvironment: true
                     scriptType: bash
                     scriptLocation: inlineScript
-                    addSpnToEnvironment: true
                     inlineScript: |
                       set -euo pipefail
 
@@ -728,9 +773,12 @@ stages:
                       cd pim
                       echo "Applying PIM..."
 
-                      export ARM_USE_AZUREAD=true
-                      export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
+                      export ARM_CLIENT_ID="$servicePrincipalId"
+                      export ARM_TENANT_ID="$tenantId"
                       export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+                      export ARM_USE_OIDC=true
+                      export ARM_OIDC_TOKEN="$idToken"
+                      export ARM_OIDC_AZURE_SERVICE_CONNECTION_ID="${AZURESUBSCRIPTION_SERVICE_CONNECTION_ID:-}"
 
                       terraform init -input=false \
                         -backend-config="resource_group_name=$(TF_STATE_RG)" \
@@ -742,11 +790,12 @@ stages:
                         "$(Pipeline.Workspace)/pim-terraform-plan/tfplan"
 
                       echo "✓ PIM applied successfully"
+                  env:
+                    ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
 
       - job: PostDeploymentSummary
         displayName: "Generate Deployment Summary"
-        dependsOn:
-          - ApplyPIM
+        dependsOn: ApplyPIM
         condition: succeeded()
         steps:
           - task: Bash@3

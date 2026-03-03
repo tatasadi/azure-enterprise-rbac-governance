@@ -27,6 +27,5 @@ provider "azurerm" {
 }
 
 provider "azuread" {
-  # Disable Azure CLI authentication in CI/CD pipelines
   use_cli = false
 }
