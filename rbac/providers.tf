@@ -4,7 +4,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.0"  # Updated for PIM support
+      version = "~> 4.0" # Updated for PIM support
     }
     azuread = {
       source  = "hashicorp/azuread"

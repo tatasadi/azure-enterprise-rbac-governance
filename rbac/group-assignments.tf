@@ -16,7 +16,7 @@ resource "azurerm_pim_eligible_role_assignment" "platform_owner" {
   schedule {
     start_date_time = "2026-03-03T00:00:00Z"
     expiration {
-      duration_hours = 8760  # 1 year eligibility (renewable)
+      duration_hours = 8760 # 1 year eligibility (renewable)
     }
   }
 
@@ -37,7 +37,7 @@ resource "azurerm_pim_eligible_role_assignment" "platform_contributor" {
   schedule {
     start_date_time = "2026-03-03T00:00:00Z"
     expiration {
-      duration_hours = 8760  # 1 year eligibility (renewable)
+      duration_hours = 8760 # 1 year eligibility (renewable)
     }
   }
 
@@ -161,7 +161,7 @@ resource "azurerm_pim_eligible_role_assignment" "consultant_contributor" {
   schedule {
     start_date_time = "2026-03-03T00:00:00Z"
     expiration {
-      duration_hours = 2160  # 90 days (temporary engagement)
+      duration_hours = 2160 # 90 days (temporary engagement)
     }
   }
 
