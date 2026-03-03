@@ -162,6 +162,10 @@ stages:
             env:
               # Enables OIDC token refresh flow for Terraform when needed
               ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
+              TF_VAR_subscription_platform_connectivity: $(TF_VAR_subscription_platform_connectivity)
+              TF_VAR_subscription_platform_identity: $(TF_VAR_subscription_platform_identity)
+              TF_VAR_subscription_workload_nonprod: $(TF_VAR_subscription_workload_nonprod)
+              TF_VAR_subscription_workload_prod: $(TF_VAR_subscription_workload_prod)
 
           - task: PublishPipelineArtifact@1
             displayName: "Publish MG Plan"
@@ -221,6 +225,9 @@ stages:
                 ls -lh tfplan plan.json
             env:
               ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
+              TF_VAR_group_owners: $(TF_VAR_group_owners)
+              TF_VAR_subscription_workload_nonprod: $(TF_VAR_subscription_workload_nonprod)
+              TF_VAR_subscription_workload_prod: $(TF_VAR_subscription_workload_prod)
 
           - task: PublishPipelineArtifact@1
             displayName: "Publish RBAC Plan"
@@ -280,6 +287,9 @@ stages:
                 ls -lh tfplan plan.json
             env:
               ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
+              TF_VAR_management_group_landing_zones: $(TF_VAR_management_group_landing_zones)
+              TF_VAR_management_group_nonprod: $(TF_VAR_management_group_nonprod)
+              TF_VAR_management_group_prod: $(TF_VAR_management_group_prod)
 
           - task: PublishPipelineArtifact@1
             displayName: "Publish Custom Roles Plan"
@@ -339,6 +349,9 @@ stages:
                 ls -lh tfplan plan.json
             env:
               ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
+              TF_VAR_group_owners: $(TF_VAR_group_owners)
+              TF_VAR_subscription_workload_nonprod: $(TF_VAR_subscription_workload_nonprod)
+              TF_VAR_subscription_workload_prod: $(TF_VAR_subscription_workload_prod)
 
           - task: PublishPipelineArtifact@1
             displayName: "Publish Policies Plan"
@@ -351,65 +364,6 @@ stages:
             inputs:
               targetPath: "policies/plan.json"
               artifact: "policies-plan-json"
-
-      - job: PlanPIM
-        displayName: "Plan - PIM"
-        steps:
-          - checkout: self
-
-          - task: TerraformInstaller@0
-            displayName: "Install Terraform"
-            inputs:
-              terraformVersion: $(TF_VERSION)
-
-          - task: AzureCLI@2
-            displayName: "Terraform Plan - PIM"
-            inputs:
-              azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
-              addSpnToEnvironment: true
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                set -euo pipefail
-
-                if [ ! -d "pim" ]; then
-                  echo "Skipping: pim folder not found."
-                  exit 0
-                fi
-
-                cd pim
-                echo "Planning PIM..."
-
-                export ARM_CLIENT_ID="$servicePrincipalId"
-                export ARM_TENANT_ID="$tenantId"
-                export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
-                export ARM_USE_OIDC=true
-                export ARM_OIDC_TOKEN="$idToken"
-                export ARM_OIDC_AZURE_SERVICE_CONNECTION_ID="${AZURESUBSCRIPTION_SERVICE_CONNECTION_ID:-}"
-
-                terraform init -input=false \
-                  -backend-config="resource_group_name=$(TF_STATE_RG)" \
-                  -backend-config="storage_account_name=$(TF_STATE_SA)" \
-                  -backend-config="container_name=$(TF_STATE_CONTAINER)" \
-                  -backend-config="key=pim.tfstate"
-
-                terraform plan -input=false -no-color -out=tfplan
-                terraform show -json tfplan > plan.json
-                ls -lh tfplan plan.json
-            env:
-              ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
-
-          - task: PublishPipelineArtifact@1
-            displayName: "Publish PIM Plan"
-            inputs:
-              targetPath: "pim/tfplan"
-              artifact: "pim-terraform-plan"
-
-          - task: PublishPipelineArtifact@1
-            displayName: "Publish PIM Plan JSON"
-            inputs:
-              targetPath: "pim/plan.json"
-              artifact: "pim-plan-json"
 
       - job: AnalyzeRBACChanges
         displayName: "Analyze RBAC Changes"
@@ -568,6 +522,11 @@ stages:
                       echo "✓ Management Groups applied successfully"
                   env:
                     ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
+                    TF_VAR_subscription_platform_connectivity: $(TF_VAR_subscription_platform_connectivity)
+                    TF_VAR_subscription_platform_identity: $(TF_VAR_subscription_platform_identity)
+                    TF_VAR_subscription_workload_nonprod: $(TF_VAR_subscription_workload_nonprod)
+                    TF_VAR_subscription_workload_prod: $(TF_VAR_subscription_workload_prod)
+                    
 
       - deployment: ApplyCustomRoles
         displayName: "Apply - Custom Roles"
@@ -624,6 +583,9 @@ stages:
                       echo "✓ Custom Roles applied successfully"
                   env:
                     ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
+                    TF_VAR_management_group_landing_zones: $(TF_VAR_management_group_landing_zones)
+                    TF_VAR_management_group_nonprod: $(TF_VAR_management_group_nonprod)
+                    TF_VAR_management_group_prod: $(TF_VAR_management_group_prod)
 
       - deployment: ApplyRBAC
         displayName: "Apply - RBAC"
@@ -680,6 +642,9 @@ stages:
                       echo "✓ RBAC applied successfully"
                   env:
                     ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
+                    TF_VAR_group_owners: $(TF_VAR_group_owners)
+                    TF_VAR_subscription_workload_nonprod: $(TF_VAR_subscription_workload_nonprod)
+                    TF_VAR_subscription_workload_prod: $(TF_VAR_subscription_workload_prod)
 
       - deployment: ApplyPolicies
         displayName: "Apply - Policies"
@@ -736,62 +701,9 @@ stages:
                       echo "✓ Policies applied successfully"
                   env:
                     ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
-
-      - deployment: ApplyPIM
-        displayName: "Apply - PIM"
-        dependsOn: ApplyPolicies
-        environment: production
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - checkout: self
-
-                - task: TerraformInstaller@0
-                  displayName: "Install Terraform"
-                  inputs:
-                    terraformVersion: $(TF_VERSION)
-
-                - download: current
-                  artifact: pim-terraform-plan
-
-                - task: AzureCLI@2
-                  displayName: "Terraform Apply - PIM"
-                  inputs:
-                    azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
-                    addSpnToEnvironment: true
-                    scriptType: bash
-                    scriptLocation: inlineScript
-                    inlineScript: |
-                      set -euo pipefail
-
-                      if [ ! -d "pim" ]; then
-                        echo "Skipping: pim folder not found."
-                        exit 0
-                      fi
-
-                      cd pim
-                      echo "Applying PIM..."
-
-                      export ARM_CLIENT_ID="$servicePrincipalId"
-                      export ARM_TENANT_ID="$tenantId"
-                      export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
-                      export ARM_USE_OIDC=true
-                      export ARM_OIDC_TOKEN="$idToken"
-                      export ARM_OIDC_AZURE_SERVICE_CONNECTION_ID="${AZURESUBSCRIPTION_SERVICE_CONNECTION_ID:-}"
-
-                      terraform init -input=false \
-                        -backend-config="resource_group_name=$(TF_STATE_RG)" \
-                        -backend-config="storage_account_name=$(TF_STATE_SA)" \
-                        -backend-config="container_name=$(TF_STATE_CONTAINER)" \
-                        -backend-config="key=pim.tfstate"
-
-                      terraform apply -input=false -auto-approve \
-                        "$(Pipeline.Workspace)/pim-terraform-plan/tfplan"
-
-                      echo "✓ PIM applied successfully"
-                  env:
-                    ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)
+                    TF_VAR_group_owners: $(TF_VAR_group_owners)
+                    TF_VAR_subscription_workload_nonprod: $(TF_VAR_subscription_workload_nonprod)
+                    TF_VAR_subscription_workload_prod: $(TF_VAR_subscription_workload_prod)
 
       - job: PostDeploymentSummary
         displayName: "Generate Deployment Summary"
