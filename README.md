@@ -289,8 +289,22 @@ git push origin feature/add-new-group
 
 ## 📚 Documentation
 
-- [pim/README.md](pim/README.md) - PIM configuration guide
-- [docs/](docs/) - Additional architecture and decision logs
+### Core Documentation
+- [README.md](README.md) - This file - project overview and quick start
+
+### Operational Guides
+- [pim/README.md](pim/README.md) - PIM configuration and activation policies
+- [docs/runbook.md](docs/runbook.md) - Operational procedures and troubleshooting
+
+### Architecture & Design
+- [docs/architecture-diagram.md](docs/architecture-diagram.md) - Visual architecture diagrams and data flows
+- [docs/role-matrix.md](docs/role-matrix.md) - Complete RBAC role assignment matrix
+- [docs/security-decisions.md](docs/security-decisions.md) - Security decision log and rationale
+
+### Pipeline Documentation
+- [pipeline/README.md](pipeline/README.md) - CI/CD pipeline setup and usage
+- [pipeline/QUICK_START.md](pipeline/QUICK_START.md) - Quick start guide for pipeline
+- [pipeline/SETUP_CHECKLIST.md](pipeline/SETUP_CHECKLIST.md) - Pipeline setup checklist
 
 ## 🛠️ Troubleshooting
 
@@ -342,5 +356,6 @@ This project is licensed under the MIT License.
 
 ---
 
-**Version:** 1.0
-**Last Updated:** 2026-02-26
+**Version:** 1.1
+**Last Updated:** 2026-03-03
+**Phase 7 Status:** ✅ Documentation Complete
