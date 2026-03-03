@@ -120,7 +120,10 @@ class RBACChangeParser:
         if change_info["resource_type"] != "azurerm_role_assignment":
             return False
 
-        after = change_info.get("after", {})
+        after = change_info.get("after")
+        if after is None:
+            return False
+
         role_def_id = after.get("role_definition_id", "") or after.get("role_definition_name", "")
 
         # Check for Owner role
@@ -216,8 +219,8 @@ class RBACChangeParser:
         print(f"Type: {resource_type}")
 
         if resource_type == "azurerm_role_assignment":
-            after = change.get("after", {})
-            before = change.get("before", {})
+            after = change.get("after") or {}
+            before = change.get("before") or {}
 
             if action == "REMOVE":
                 role = self._get_role_name(before.get("role_definition_id", ""))
@@ -241,8 +244,8 @@ class RBACChangeParser:
                     print(f"  ⚠️  HIGH RISK: Privileged role assignment")
 
         elif resource_type == "azuread_group":
-            after = change.get("after", {})
-            before = change.get("before", {})
+            after = change.get("after") or {}
+            before = change.get("before") or {}
 
             if action == "REMOVE":
                 print(f"  Group: {before.get('display_name', 'Unknown')}")
@@ -251,8 +254,8 @@ class RBACChangeParser:
                 print(f"  Description: {after.get('description', 'N/A')}")
 
         elif resource_type == "azurerm_role_definition":
-            after = change.get("after", {})
-            before = change.get("before", {})
+            after = change.get("after") or {}
+            before = change.get("before") or {}
 
             if action == "REMOVE":
                 print(f"  Role Name: {before.get('name', 'Unknown')}")
@@ -321,8 +324,8 @@ class RBACChangeParser:
         f.write(f"**Type:** {resource_type}  \n")
 
         if resource_type == "azurerm_role_assignment":
-            after = change.get("after", {})
-            before = change.get("before", {})
+            after = change.get("after") or {}
+            before = change.get("before") or {}
 
             if action == "REMOVE":
                 role = self._get_role_name(before.get("role_definition_id", ""))
@@ -339,12 +342,12 @@ class RBACChangeParser:
                     f.write(f"\n⚠️ **HIGH RISK:** Privileged role assignment\n")
 
         elif resource_type == "azuread_group":
-            after = change.get("after", {})
+            after = change.get("after") or {}
             f.write(f"**Group Name:** {after.get('display_name', 'Unknown')}  \n")
             f.write(f"**Description:** {after.get('description', 'N/A')}  \n")
 
         elif resource_type == "azurerm_role_definition":
-            after = change.get("after", {})
+            after = change.get("after") or {}
             f.write(f"**Role Name:** {after.get('name', 'Unknown')}  \n")
             f.write(f"**Description:** {after.get('description', 'N/A')}  \n")
 

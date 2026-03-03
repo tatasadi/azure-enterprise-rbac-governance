@@ -2,7 +2,7 @@
 
 ## Overview
 
-PIM configuration is primarily done through the Azure Portal due to limited Terraform support for PIM policies. This directory contains documentation and configuration templates for PIM settings.
+PIM eligible assignments are managed via **Terraform** using the `azurerm_pim_eligible_role_assignment` resource. Role activation policies (duration, approval, MFA) must still be configured through the Azure Portal.
 
 ## Prerequisites
 
@@ -10,42 +10,52 @@ PIM configuration is primarily done through the Azure Portal due to limited Terr
 - Privileged Role Administrator or Global Administrator role
 - Management Groups and RBAC groups already deployed
 
-## Groups Configured for PIM
+## PIM-Eligible Assignments (Managed by Terraform)
 
-Based on the RBAC module, these groups should be configured as **eligible assignments** in PIM:
+The following groups are configured with **PIM-eligible assignments** automatically via Terraform:
 
 1. **AZ-ROL-Platform-Owner-Eligible**
    - Role: Owner
    - Scope: Platform Management Group
-   - Max duration: 2 hours
-   - Approval: Required
-   - MFA: Required
+   - Eligibility duration: 1 year (auto-renewed by Terraform)
+   - **Activation settings (configure in Portal):**
+     - Max duration: 2 hours
+     - Approval: Required
+     - MFA: Required
 
 2. **AZ-ROL-Platform-Contributor-Eligible**
    - Role: Contributor
    - Scope: Platform Management Group
-   - Max duration: 2 hours
-   - Approval: Optional
-   - MFA: Required
+   - Eligibility duration: 1 year (auto-renewed by Terraform)
+   - **Activation settings (configure in Portal):**
+     - Max duration: 4 hours
+     - Approval: Optional
+     - MFA: Required
 
 3. **AZ-ROL-Consultant-Contributor-Temp**
    - Role: Contributor
    - Scope: LandingZones Management Group
-   - Max duration: 2 hours
-   - Approval: Required
-   - MFA: Required
-   - Eligibility expiration: 90 days
+   - Eligibility duration: 90 days (temporary engagement)
+   - **Activation settings (configure in Portal):**
+     - Max duration: 2 hours
+     - Approval: Required
+     - MFA: Required
 
-## PIM Configuration Steps (Manual)
+## PIM Configuration Steps
+
+> **Note:** Terraform creates the eligible assignments automatically. You only need to configure the activation policies in the Portal.
 
 ### Step 1: Navigate to PIM
 
 1. Go to Azure Portal → Entra ID → Privileged Identity Management
 2. Click **Azure resources** in the left navigation
-3. Click **Discover resources**
-4. Select your Management Groups to onboard them to PIM
+3. Your Management Groups should already appear (if not, click **Discover resources**)
 
-### Step 2: Configure Role Settings (Platform Owner)
+### Step 2: Configure Role Activation Settings
+
+After Terraform creates the eligible assignments, configure the activation policies for each role:
+
+#### Configure Platform Owner Role Settings
 
 1. Navigate to the **Platform** Management Group in PIM
 2. Click **Settings** → Find **Owner** role → Click **Edit**
@@ -64,12 +74,14 @@ Select approvers: [Security team members]
 #### Assignment Settings:
 ```
 Allow permanent eligible assignment: No
-Expire eligible assignments after: 180 days
+Expire eligible assignments after: 365 days (managed by Terraform)
 Allow permanent active assignment: No
-Expire active assignments after: 30 days
+Expire active assignments after: Not allowed
 Require justification on active assignment: Yes
 Require Azure Multi-Factor Authentication on active assignment: Yes
 ```
+
+> **Note:** Eligible assignment expiration is managed by Terraform (1 year). Terraform will automatically renew these assignments.
 
 #### Notification Settings:
 ```
@@ -87,20 +99,19 @@ Send notifications when eligible members activate this role:
 - Request approval notification: Approvers
 ```
 
-### Step 3: Create Eligible Assignments
+### Step 3: Verify Eligible Assignments
+
+After running `terraform apply` in the RBAC module, verify the assignments were created:
 
 1. In PIM, navigate to **Assignments** → **Eligible assignments**
-2. Click **+ Add assignments**
-3. Select the role (e.g., Owner)
-4. Select members: Choose the Entra ID group (e.g., AZ-ROL-Platform-Owner-Eligible)
-5. Set assignment duration: 180 days (will require renewal)
-6. Click **Assign**
+2. You should see:
+   - **Owner** → AZ-ROL-Platform-Owner-Eligible (Platform MG, expires in 1 year)
+   - **Contributor** → AZ-ROL-Platform-Contributor-Eligible (Platform MG, expires in 1 year)
+   - **Contributor** → AZ-ROL-Consultant-Contributor-Temp (LandingZones MG, expires in 90 days)
 
-Repeat for:
-- Platform Contributor → AZ-ROL-Platform-Contributor-Eligible
-- Consultant access → AZ-ROL-Consultant-Contributor-Temp (90 days)
+> **Note:** These assignments are created by Terraform. Do NOT create them manually in the Portal.
 
-### Step 4: Remove Permanent Assignments (Migration)
+### Step 4: Remove Permanent Assignments (Migration - If Applicable)
 
 ⚠️ **CRITICAL: Only do this after confirming eligible assignments work!**
 
@@ -148,7 +159,7 @@ Repeat for:
 | Require justification | Yes |
 | Require approval | Yes |
 | Approvers | Security Team + Platform Leads |
-| Eligible assignment expiration | 180 days |
+| Eligible assignment expiration | 365 days (managed by Terraform) |
 | Active assignment expiration | Not allowed |
 
 ### Contributor Role Policy (Platform Management Group)
@@ -159,7 +170,7 @@ Repeat for:
 | Require MFA on activation | Yes |
 | Require justification | Yes |
 | Require approval | No |
-| Eligible assignment expiration | 180 days |
+| Eligible assignment expiration | 365 days (managed by Terraform) |
 | Active assignment expiration | 30 days (exceptions only) |
 
 ### Consultant Access Policy (LandingZones)
@@ -171,7 +182,7 @@ Repeat for:
 | Require justification | Yes |
 | Require approval | Yes |
 | Approvers | Security Team |
-| Eligible assignment expiration | 90 days |
+| Eligible assignment expiration | 90 days (managed by Terraform) |
 | Active assignment expiration | Not allowed |
 
 ## Monitoring & Compliance
@@ -193,7 +204,7 @@ authorizationresources
 | extend roleDefinitionId = tostring(properties.roleDefinitionId)
 | extend principalId = tostring(properties.principalId)
 | extend scope = tostring(properties.scope)
-| where roleDefinitionId contains "8e3af657-a8ff-443c-a75c-2fe8c4bcb635" // Owner role
+| where roleDefinitionId contains "8e3af698-a3ff-123c-a43c-2fe8c4bcb634" // Owner role
 | project principalId, scope, roleDefinitionId
 ```
 
@@ -219,15 +230,16 @@ If PIM causes access issues:
 5. Review PIM configuration for the problem
 6. Fix the issue and test again
 
-## Terraform Limitation Note
+## Terraform Support for PIM
 
-Terraform has limited support for PIM. The following must be done manually:
+Terraform now supports PIM eligible assignments via `azurerm_pim_eligible_role_assignment`:
 
-- ✅ Create Entra ID groups (done via Terraform in rbac module)
-- ✅ Create role assignments (done via Terraform, converted to eligible in Portal)
-- ❌ Configure PIM eligibility (manual in Portal)
-- ❌ Configure PIM policies (manual in Portal)
+- ✅ Create Entra ID groups (automated via Terraform in rbac module)
+- ✅ Create PIM eligible assignments (automated via Terraform in rbac module)
+- ✅ Set eligibility duration (automated via Terraform)
+- ❌ Configure role activation policies (manual in Portal - duration, approval, MFA)
 - ❌ Set up approval workflows (manual in Portal)
+- ❌ Configure notification settings (manual in Portal)
 
 ## Future Enhancement
 

@@ -133,11 +133,12 @@ terraform plan
 terraform apply
 ```
 
-#### Step 5: PIM Configuration (Manual)
-Follow the guide in [pim/README.md](pim/README.md) to:
-- Configure PIM eligibility for privileged groups
+#### Step 5: PIM Configuration
+PIM eligible assignments are automatically created by the RBAC module. Follow the guide in [pim/README.md](pim/README.md) to:
+- Verify Terraform created the eligible assignments
+- Configure role activation policies (duration, approval, MFA) in the Portal
 - Set up approval workflows
-- Migrate permanent assignments to eligible
+- (Optional) Migrate any existing permanent assignments to eligible
 
 ## 📁 Repository Structure
 
@@ -178,10 +179,16 @@ Follow the guide in [pim/README.md](pim/README.md) to:
 │   └── terraform.tfvars.example
 │
 ├── pim/                   # PIM configuration documentation
-│   └── README.md          # Manual PIM setup guide
+│   └── README.md          # PIM activation policy configuration guide
 │
-├── docs/                  # Additional documentation
-├── scripts/               # Helper scripts
+├── pipeline/              # Azure DevOps CI/CD pipeline
+│   ├── azure-pipelines.yml
+│   ├── scripts/
+│   │   └── parse-rbac-changes.py
+│   ├── README.md
+│   ├── QUICK_START.md
+│   └── SETUP_CHECKLIST.md
+│
 └── README.md             # This file
 ```
 
@@ -189,24 +196,27 @@ Follow the guide in [pim/README.md](pim/README.md) to:
 
 ### Entra ID Groups Created
 
-| Group Name | Purpose | PIM Eligible |
-|------------|---------|--------------|
-| AZ-ROL-Platform-Owner-Eligible | Platform team Owner | ✅ Yes (2h) |
-| AZ-ROL-Platform-Contributor-Eligible | Platform team Contributor | ✅ Yes (2h) |
-| AZ-ROL-AppTeam-Contributor-Prod | App teams Prod access | ❌ Active |
-| AZ-ROL-AppTeam-Contributor-NonProd | App teams NonProd access | ❌ Active |
+| Group Name | Purpose | Assignment Type |
+|------------|---------|-----------------|
+| AZ-ROL-Platform-Owner-Eligible | Platform team Owner | ✅ PIM Eligible (2h activation, 1yr duration) |
+| AZ-ROL-Platform-Contributor-Eligible | Platform team Contributor | ✅ PIM Eligible (4h activation, 1yr duration) |
+| AZ-ROL-Consultant-Contributor-Temp | External consultants | ✅ PIM Eligible (2h activation, 90d duration) |
+| AZ-ROL-AppTeam-Contributor-Prod | App teams Prod access | ❌ Active (RG-scoped) |
+| AZ-ROL-AppTeam-Contributor-NonProd | App teams NonProd access | ❌ Active (RG-scoped) |
+| AZ-ROL-AppTeam-Reader-Prod | App teams Prod read access | ❌ Active |
+| AZ-ROL-AppTeam-Reader-NonProd | App teams NonProd read access | ❌ Active |
 | AZ-ROL-Security-Reader | Security team reader | ❌ Active |
 | AZ-ROL-Audit-Reader | Audit team reader | ❌ Active |
 | AZ-ROL-Network-Contributor | Network team | ❌ Active |
 | AZ-ROL-Identity-Contributor | Identity team | ❌ Active |
-| AZ-ROL-Consultant-Contributor-Temp | External consultants | ✅ Yes (2h, 90d) |
-| AZ-ROL-DevOps-Deployer-Prod | CI/CD pipelines Prod | ❌ Active |
-| AZ-ROL-DevOps-Deployer-NonProd | CI/CD pipelines NonProd | ❌ Active |
+| AZ-ROL-DevOps-Deployer-Prod | CI/CD pipelines Prod | ❌ Active (Custom role) |
+| AZ-ROL-DevOps-Deployer-NonProd | CI/CD pipelines NonProd | ❌ Active (Custom role) |
 
 ### Custom Roles Created
 
-1. **CR-AppDeployer-ResourceGroup** - Deploy apps without Owner/delete permissions
-2. **CR-SecurityReader-Enterprise** - Read-only security access including secrets
+1. **CR-AppDeployer-ResourceGroup-Prod** - Deploy apps to Prod without Owner/delete permissions
+2. **CR-AppDeployer-ResourceGroup-NonProd** - Deploy apps to NonProd without Owner/delete permissions
+3. **CR-SecurityReader-Enterprise** - Read-only security access including Key Vault secrets and policies
 
 ### Azure Policies Deployed
 
