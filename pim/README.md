@@ -17,7 +17,7 @@ The following groups are configured with **PIM-eligible assignments** automatica
 1. **AZ-ROL-Platform-Owner-Eligible**
    - Role: Owner
    - Scope: Platform Management Group
-   - Eligibility duration: 1 year (auto-renewed by Terraform)
+   - Eligibility duration: 180 days (auto-renewed by Terraform)
    - **Activation settings (configure in Portal):**
      - Max duration: 2 hours
      - Approval: Required
@@ -26,7 +26,7 @@ The following groups are configured with **PIM-eligible assignments** automatica
 2. **AZ-ROL-Platform-Contributor-Eligible**
    - Role: Contributor
    - Scope: Platform Management Group
-   - Eligibility duration: 1 year (auto-renewed by Terraform)
+   - Eligibility duration: 180 days (auto-renewed by Terraform)
    - **Activation settings (configure in Portal):**
      - Max duration: 4 hours
      - Approval: Optional
@@ -74,14 +74,14 @@ Select approvers: [Security team members]
 #### Assignment Settings:
 ```
 Allow permanent eligible assignment: No
-Expire eligible assignments after: 365 days (managed by Terraform)
+Expire eligible assignments after: 180 days (managed by Terraform)
 Allow permanent active assignment: No
 Expire active assignments after: Not allowed
 Require justification on active assignment: Yes
 Require Azure Multi-Factor Authentication on active assignment: Yes
 ```
 
-> **Note:** Eligible assignment expiration is managed by Terraform (1 year). Terraform will automatically renew these assignments.
+> **Note:** Eligible assignment expiration is managed by Terraform (180 days). Terraform will automatically renew these assignments.
 
 #### Notification Settings:
 ```
@@ -105,8 +105,8 @@ After running `terraform apply` in the RBAC module, verify the assignments were 
 
 1. In PIM, navigate to **Assignments** → **Eligible assignments**
 2. You should see:
-   - **Owner** → AZ-ROL-Platform-Owner-Eligible (Platform MG, expires in 1 year)
-   - **Contributor** → AZ-ROL-Platform-Contributor-Eligible (Platform MG, expires in 1 year)
+   - **Owner** → AZ-ROL-Platform-Owner-Eligible (Platform MG, expires in 180 days)
+   - **Contributor** → AZ-ROL-Platform-Contributor-Eligible (Platform MG, expires in 180 days)
    - **Contributor** → AZ-ROL-Consultant-Contributor-Temp (LandingZones MG, expires in 90 days)
 
 > **Note:** These assignments are created by Terraform. Do NOT create them manually in the Portal.
@@ -159,7 +159,7 @@ After running `terraform apply` in the RBAC module, verify the assignments were 
 | Require justification | Yes |
 | Require approval | Yes |
 | Approvers | Security Team + Platform Leads |
-| Eligible assignment expiration | 365 days (managed by Terraform) |
+| Eligible assignment expiration | 180 days (managed by Terraform) |
 | Active assignment expiration | Not allowed |
 
 ### Contributor Role Policy (Platform Management Group)
@@ -170,7 +170,7 @@ After running `terraform apply` in the RBAC module, verify the assignments were 
 | Require MFA on activation | Yes |
 | Require justification | Yes |
 | Require approval | No |
-| Eligible assignment expiration | 365 days (managed by Terraform) |
+| Eligible assignment expiration | 180 days (managed by Terraform) |
 | Active assignment expiration | 30 days (exceptions only) |
 
 ### Consultant Access Policy (LandingZones)

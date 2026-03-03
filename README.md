@@ -198,8 +198,8 @@ PIM eligible assignments are automatically created by the RBAC module. Follow th
 
 | Group Name | Purpose | Assignment Type |
 |------------|---------|-----------------|
-| AZ-ROL-Platform-Owner-Eligible | Platform team Owner | ✅ PIM Eligible (2h activation, 1yr duration) |
-| AZ-ROL-Platform-Contributor-Eligible | Platform team Contributor | ✅ PIM Eligible (4h activation, 1yr duration) |
+| AZ-ROL-Platform-Owner-Eligible | Platform team Owner | ✅ PIM Eligible (2h activation, 180d duration) |
+| AZ-ROL-Platform-Contributor-Eligible | Platform team Contributor | ✅ PIM Eligible (4h activation, 180d duration) |
 | AZ-ROL-Consultant-Contributor-Temp | External consultants | ✅ PIM Eligible (2h activation, 90d duration) |
 | AZ-ROL-AppTeam-Contributor-Prod | App teams Prod access | ❌ Active (RG-scoped) |
 | AZ-ROL-AppTeam-Contributor-NonProd | App teams NonProd access | ❌ Active (RG-scoped) |
