@@ -19,9 +19,4 @@ terraform {
 
 provider "azurerm" {
   features {}
-
-  # Disable Azure CLI authentication in CI/CD pipelines
-  # The AzureCLI@2 task sets ARM_* environment variables
-  # for Service Principal authentication
-  use_cli = false
 }

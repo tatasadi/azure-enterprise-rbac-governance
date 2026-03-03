@@ -139,9 +139,8 @@ stages:
                 cd management-groups
                 echo "Planning Management Groups..."
 
-                export ARM_CLIENT_ID="$servicePrincipalId"
-                export ARM_CLIENT_SECRET="$servicePrincipalKey"
-                export ARM_TENANT_ID="$tenantId"
+                export ARM_USE_AZUREAD=true
+                export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
                 export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 
                 terraform init -input=false \
@@ -195,9 +194,8 @@ stages:
                 cd rbac
                 echo "Planning RBAC..."
 
-                export ARM_CLIENT_ID="$servicePrincipalId"
-                export ARM_CLIENT_SECRET="$servicePrincipalKey"
-                export ARM_TENANT_ID="$tenantId"
+                export ARM_USE_AZUREAD=true
+                export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
                 export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 
                 terraform init -input=false \
@@ -251,9 +249,8 @@ stages:
                 cd custom-roles
                 echo "Planning Custom Roles..."
 
-                export ARM_CLIENT_ID="$servicePrincipalId"
-                export ARM_CLIENT_SECRET="$servicePrincipalKey"
-                export ARM_TENANT_ID="$tenantId"
+                export ARM_USE_AZUREAD=true
+                export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
                 export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 
                 terraform init -input=false \
@@ -307,9 +304,8 @@ stages:
                 cd policies
                 echo "Planning Policies..."
 
-                export ARM_CLIENT_ID="$servicePrincipalId"
-                export ARM_CLIENT_SECRET="$servicePrincipalKey"
-                export ARM_TENANT_ID="$tenantId"
+                export ARM_USE_AZUREAD=true
+                export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
                 export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 
                 terraform init -input=false \
@@ -363,9 +359,8 @@ stages:
                 cd pim
                 echo "Planning PIM..."
 
-                export ARM_CLIENT_ID="$servicePrincipalId"
-                export ARM_CLIENT_SECRET="$servicePrincipalKey"
-                export ARM_TENANT_ID="$tenantId"
+                export ARM_USE_AZUREAD=true
+                export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
                 export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 
                 terraform init -input=false \
@@ -529,9 +524,8 @@ stages:
                       cd management-groups
                       echo "Applying Management Groups..."
 
-                      export ARM_CLIENT_ID="$servicePrincipalId"
-                      export ARM_CLIENT_SECRET="$servicePrincipalKey"
-                      export ARM_TENANT_ID="$tenantId"
+                      export ARM_USE_AZUREAD=true
+                      export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
                       export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 
                       terraform init -input=false \
@@ -581,9 +575,8 @@ stages:
                       cd custom-roles
                       echo "Applying Custom Roles..."
 
-                      export ARM_CLIENT_ID="$servicePrincipalId"
-                      export ARM_CLIENT_SECRET="$servicePrincipalKey"
-                      export ARM_TENANT_ID="$tenantId"
+                      export ARM_USE_AZUREAD=true
+                      export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
                       export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 
                       terraform init -input=false \
@@ -633,9 +626,8 @@ stages:
                       cd rbac
                       echo "Applying RBAC..."
 
-                      export ARM_CLIENT_ID="$servicePrincipalId"
-                      export ARM_CLIENT_SECRET="$servicePrincipalKey"
-                      export ARM_TENANT_ID="$tenantId"
+                      export ARM_USE_AZUREAD=true
+                      export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
                       export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 
                       terraform init -input=false \
@@ -685,9 +677,8 @@ stages:
                       cd policies
                       echo "Applying Policies..."
 
-                      export ARM_CLIENT_ID="$servicePrincipalId"
-                      export ARM_CLIENT_SECRET="$servicePrincipalKey"
-                      export ARM_TENANT_ID="$tenantId"
+                      export ARM_USE_AZUREAD=true
+                      export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
                       export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 
                       terraform init -input=false \
@@ -737,9 +728,8 @@ stages:
                       cd pim
                       echo "Applying PIM..."
 
-                      export ARM_CLIENT_ID="$servicePrincipalId"
-                      export ARM_CLIENT_SECRET="$servicePrincipalKey"
-                      export ARM_TENANT_ID="$tenantId"
+                      export ARM_USE_AZUREAD=true
+                      export ARM_TENANT_ID="$(az account show --query tenantId -o tsv)"
                       export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 
                       terraform init -input=false \
