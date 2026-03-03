@@ -372,7 +372,6 @@ stages:
           - PlanRBAC
           - PlanCustomRoles
           - PlanPolicies
-          - PlanPIM
         steps:
           - checkout: self
 
@@ -429,7 +428,7 @@ stages:
                 $(SECURITY_TEAM_EMAIL)
                 $(PLATFORM_TEAM_EMAIL)
               instructions: |
-                CRITICAL: Review Terraform plans for RBAC, PIM, and Policy changes.
+                CRITICAL: Review Terraform plans for RBAC, and Policy changes.
 
                 📋 Review Checklist:
                 ✓ Download and review all plan artifacts
@@ -438,12 +437,10 @@ stages:
                 ✓ Confirm changes align with approved change ticket
                 ✓ Validate custom role permissions are least-privilege
                 ✓ Review policy assignments and exemptions
-                ✓ Review PIM changes (eligible/active assignments, policies)
 
                 ⚠️ High-Risk Changes to Watch For:
                 - New Owner role assignments
                 - New User Access Administrator assignments
-                - Modifications to PIM configuration/policies
                 - Changes to deny policies
                 - Custom role permission expansions
 
@@ -452,7 +449,6 @@ stages:
                 - rbac-terraform-plan (Role Assignments)
                 - roles-terraform-plan (Custom Roles)
                 - policies-terraform-plan (Azure Policies)
-                - pim-terraform-plan (PIM)
                 - rbac-change-summary (RBAC Diff)
 
                 🎟️ Required: Link to approved change ticket
@@ -707,7 +703,7 @@ stages:
 
       - job: PostDeploymentSummary
         displayName: "Generate Deployment Summary"
-        dependsOn: ApplyPIM
+        dependsOn: ApplyPolicies
         condition: succeeded()
         steps:
           - task: Bash@3
@@ -728,15 +724,12 @@ stages:
                 echo "✓ Custom RBAC Roles"
                 echo "✓ Role Assignments"
                 echo "✓ Azure Policies"
-                echo "✓ PIM"
                 echo ""
                 echo "### Next Steps"
                 echo "1. Verify changes in Azure Portal"
-                echo "2. Test PIM activation workflows"
-                echo "3. Review policy compliance dashboard"
-                echo "4. Update documentation if needed"
+                echo "2. Review policy compliance dashboard"
+                echo "3. Update documentation if needed"
                 echo ""
                 echo "### Monitoring"
                 echo "- Monitor Azure Activity Log for the next 24-48 hours"
-                echo "- Review PIM activation requests"
                 echo "- Check Azure Policy compliance status"
