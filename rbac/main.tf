@@ -1,6 +1,17 @@
 # Data sources for management groups (created in management-groups module)
 data "azurerm_client_config" "current" {}
 
+# Data sources for built-in role definitions (needed for PIM assignments)
+data "azurerm_role_definition" "owner" {
+  name  = "Owner"
+  scope = data.azurerm_management_group.platform.id
+}
+
+data "azurerm_role_definition" "contributor" {
+  name  = "Contributor"
+  scope = data.azurerm_management_group.platform.id
+}
+
 data "azurerm_management_group" "platform" {
   display_name = "Platform"
 }

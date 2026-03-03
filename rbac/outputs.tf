@@ -31,35 +31,41 @@ output "entra_groups" {
   }
 }
 
-output "group_names_for_pim_configuration" {
-  description = "Groups that should be configured as PIM-eligible in Azure Portal"
-  value = [
-    azuread_group.platform_owner_eligible.display_name,
-    azuread_group.platform_contributor_eligible.display_name,
-    azuread_group.consultant_contributor_temp.display_name,
-  ]
+output "pim_eligible_assignments" {
+  description = "PIM-eligible role assignments managed by Terraform"
+  value = {
+    platform_owner = {
+      group             = azuread_group.platform_owner_eligible.display_name
+      role              = "Owner"
+      scope             = "Platform Management Group"
+      eligibility_type  = "PIM-Eligible"
+      duration          = "1 year"
+      activation_policy = "Configure activation settings (max duration, approval, MFA) in Azure Portal PIM settings"
+    }
+    platform_contributor = {
+      group             = azuread_group.platform_contributor_eligible.display_name
+      role              = "Contributor"
+      scope             = "Platform Management Group"
+      eligibility_type  = "PIM-Eligible"
+      duration          = "1 year"
+      activation_policy = "Configure activation settings (max duration, approval, MFA) in Azure Portal PIM settings"
+    }
+    consultant_contributor = {
+      group             = azuread_group.consultant_contributor_temp.display_name
+      role              = "Contributor"
+      scope             = "Landing Zones Management Group"
+      eligibility_type  = "PIM-Eligible (Time-Limited)"
+      duration          = "90 days"
+      activation_policy = "Configure activation settings (max duration, approval, MFA) in Azure Portal PIM settings"
+    }
+  }
 }
 
 output "role_assignments_summary" {
-  description = "Summary of role assignments created"
+  description = "Summary of all role assignments (PIM-eligible and active)"
   value = {
-    platform_owner = {
-      group = azuread_group.platform_owner_eligible.display_name
-      role  = "Owner"
-      scope = "Platform Management Group"
-      note  = "Configure as PIM-eligible in Azure Portal"
-    }
-    security_reader = {
-      group = azuread_group.security_reader.display_name
-      role  = "Security Reader"
-      scope = "Tenant Root"
-      note  = "Active assignment"
-    }
-    audit_reader = {
-      group = azuread_group.audit_reader.display_name
-      role  = "Reader"
-      scope = "Tenant Root"
-      note  = "Active assignment"
-    }
+    pim_eligible_count = 3
+    active_count       = 11
+    note               = "PIM-eligible assignments managed by Terraform. Activation policies (approval, MFA, max duration) configured in Azure Portal."
   }
 }

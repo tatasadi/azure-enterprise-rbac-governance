@@ -1,22 +1,52 @@
 # =============================================================================
-# Platform Team Role Assignments (PIM-Eligible assignments managed in Azure Portal/PIM)
-# These create the base assignments - PIM eligibility configured separately
+# Platform Team Role Assignments (PIM-Eligible)
+# =============================================================================
+# These create PIM-eligible assignments via Terraform
+# - Users must activate the role when needed (just-in-time access)
+# - Eligibility duration: 1 year (automatically managed by Terraform)
+# - Activation policies (max duration, approval, MFA): Configure in Azure Portal > PIM
 # =============================================================================
 
-# Platform Owner - Management Group Level
-resource "azurerm_role_assignment" "platform_owner" {
-  scope                = data.azurerm_management_group.platform.id
-  role_definition_name = "Owner"
-  principal_id         = azuread_group.platform_owner_eligible.object_id
-  description          = "Platform team Owner role - Configure as PIM-eligible in Azure Portal"
+# Platform Owner - Management Group Level (PIM-Eligible)
+resource "azurerm_pim_eligible_role_assignment" "platform_owner" {
+  scope              = data.azurerm_management_group.platform.id
+  role_definition_id = data.azurerm_role_definition.owner.id
+  principal_id       = azuread_group.platform_owner_eligible.object_id
+
+  schedule {
+    start_date_time = "2026-03-03T00:00:00Z"
+    expiration {
+      duration_hours = 8760  # 1 year eligibility (renewable)
+    }
+  }
+
+  justification = "Platform Owner eligible assignment - requires activation for privileged operations"
+
+  ticket {
+    number = "RBAC-PLATFORM-001"
+    system = "Terraform"
+  }
 }
 
-# Platform Contributor - Management Group Level
-resource "azurerm_role_assignment" "platform_contributor" {
-  scope                = data.azurerm_management_group.platform.id
-  role_definition_name = "Contributor"
-  principal_id         = azuread_group.platform_contributor_eligible.object_id
-  description          = "Platform team Contributor role - Configure as PIM-eligible in Azure Portal"
+# Platform Contributor - Management Group Level (PIM-Eligible)
+resource "azurerm_pim_eligible_role_assignment" "platform_contributor" {
+  scope              = data.azurerm_management_group.platform.id
+  role_definition_id = data.azurerm_role_definition.contributor.id
+  principal_id       = azuread_group.platform_contributor_eligible.object_id
+
+  schedule {
+    start_date_time = "2026-03-03T00:00:00Z"
+    expiration {
+      duration_hours = 8760  # 1 year eligibility (renewable)
+    }
+  }
+
+  justification = "Platform Contributor eligible assignment - requires activation for infrastructure changes"
+
+  ticket {
+    number = "RBAC-PLATFORM-002"
+    system = "Terraform"
+  }
 }
 
 # =============================================================================
@@ -119,15 +149,28 @@ resource "azurerm_role_assignment" "audit_reader_landing_zones" {
 }
 
 # =============================================================================
-# Consultant Role Assignments (PIM-Eligible)
+# Consultant Role Assignments (PIM-Eligible, Time-Limited)
 # =============================================================================
 
-# External Consultant - Contributor at LandingZones level (PIM-eligible)
-resource "azurerm_role_assignment" "consultant_contributor" {
-  scope                = data.azurerm_management_group.landing_zones.id
-  role_definition_name = "Contributor"
-  principal_id         = azuread_group.consultant_contributor_temp.object_id
-  description          = "External consultants - Temporary Contributor via PIM (configure 90-day eligibility in PIM)"
+# External Consultant - Contributor at LandingZones level (PIM-eligible, 90-day limit)
+resource "azurerm_pim_eligible_role_assignment" "consultant_contributor" {
+  scope              = data.azurerm_management_group.landing_zones.id
+  role_definition_id = data.azurerm_role_definition.contributor.id
+  principal_id       = azuread_group.consultant_contributor_temp.object_id
+
+  schedule {
+    start_date_time = "2026-03-03T00:00:00Z"
+    expiration {
+      duration_hours = 2160  # 90 days (temporary engagement)
+    }
+  }
+
+  justification = "External consultant temporary eligible assignment - 90-day engagement for Landing Zones workloads"
+
+  ticket {
+    number = "CONSULTANT-ENGAGEMENT-2026-Q1"
+    system = "Terraform"
+  }
 }
 
 # =============================================================================
