@@ -51,7 +51,7 @@ stages:
         steps:
           - checkout: self
 
-          - task: TerraformInstaller@0
+          - task: TerraformInstaller@1
             displayName: "Install Terraform"
             inputs:
               terraformVersion: $(TF_VERSION)
@@ -118,7 +118,7 @@ stages:
         steps:
           - checkout: self
 
-          - task: TerraformInstaller@0
+          - task: TerraformInstaller@1
             displayName: "Install Terraform"
             inputs:
               terraformVersion: $(TF_VERSION)
@@ -184,7 +184,7 @@ stages:
         steps:
           - checkout: self
 
-          - task: TerraformInstaller@0
+          - task: TerraformInstaller@1
             displayName: "Install Terraform"
             inputs:
               terraformVersion: $(TF_VERSION)
@@ -246,7 +246,7 @@ stages:
         steps:
           - checkout: self
 
-          - task: TerraformInstaller@0
+          - task: TerraformInstaller@1
             displayName: "Install Terraform"
             inputs:
               terraformVersion: $(TF_VERSION)
@@ -308,7 +308,7 @@ stages:
         steps:
           - checkout: self
 
-          - task: TerraformInstaller@0
+          - task: TerraformInstaller@1
             displayName: "Install Terraform"
             inputs:
               terraformVersion: $(TF_VERSION)
@@ -473,7 +473,7 @@ stages:
               steps:
                 - checkout: self
 
-                - task: TerraformInstaller@0
+                - task: TerraformInstaller@1
                   displayName: "Install Terraform"
                   inputs:
                     terraformVersion: $(TF_VERSION)
@@ -534,7 +534,7 @@ stages:
               steps:
                 - checkout: self
 
-                - task: TerraformInstaller@0
+                - task: TerraformInstaller@1
                   displayName: "Install Terraform"
                   inputs:
                     terraformVersion: $(TF_VERSION)
@@ -593,7 +593,7 @@ stages:
               steps:
                 - checkout: self
 
-                - task: TerraformInstaller@0
+                - task: TerraformInstaller@1
                   displayName: "Install Terraform"
                   inputs:
                     terraformVersion: $(TF_VERSION)
@@ -652,7 +652,7 @@ stages:
               steps:
                 - checkout: self
 
-                - task: TerraformInstaller@0
+                - task: TerraformInstaller@1
                   displayName: "Install Terraform"
                   inputs:
                     terraformVersion: $(TF_VERSION)
